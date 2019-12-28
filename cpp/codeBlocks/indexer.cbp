@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="indexer" />
+		<Option pch_mode="2" />
+		<Option compiler="gcc" />
+		<Build>
+			<Target title="Debug">
+				<Option output="bin/Debug/indexer" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Debug/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-std=c++11" />
+					<Add option="-g" />
+				</Compiler>
+			</Target>
+			<Target title="Release">
+				<Option output="bin/Release/indexer" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Release/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-O2" />
+				</Compiler>
+				<Linker>
+					<Add option="-s" />
+				</Linker>
+			</Target>
+		</Build>
+		<Compiler>
+			<Add option="-std=c++11" />
+			<Add option="-Wall" />
+			<Add option="-fexceptions" />
+			<Add option="-I/usr/include/mysql" />
+			<Add option="-fno-strict-aliasing" />
+		</Compiler>
+		<Linker>
+			<Add option="-L/usr/local/mysql" />
+			<Add library="/home/adel/sphinx-2.3.1-beta/src/libsphinx.a" />
+			<Add library="rt" />
+			<Add library="m" />
+			<Add library="pthread" />
+			<Add library="dl" />
+			<Add library="z" />
+			<Add library="mysqlclient" />
+		</Linker>
+		<Unit filename="../src/indexer.cpp" />
+		<Unit filename="../src/mynodes.cpp" />
+		<Unit filename="../src/mynodes.h" />
+		<Unit filename="../src/utils.cpp" />
+		<Unit filename="../src/utils.h" />
+		<Extensions>
+			<code_completion />
+			<debugger />
+		</Extensions>
+	</Project>
+</CodeBlocks_project_file>

@@ -1,0 +1,44 @@
+# depslib dependency file v1.0
+1449240270 source:/var/www/html/1200/test/bplustree/mynodes/cpp/mynodes.cpp
+	"mynodes.h"
+	<limits.h>
+	<stdlib.h>
+	<string>
+	<vector>
+	<sstream>
+	<iostream>
+	<unistd.h>
+	<fcntl.h>
+	<sys/mman.h>
+	<sys/stat.h>
+	<utility>
+	<chrono>
+	"utils.h"
+
+1449299613 /var/www/html/1200/test/bplustree/mynodes/cpp/mynodes.h
+	<stddef.h>
+	"utils.h"
+
+1449301518 /var/www/html/1200/test/bplustree/mynodes/cpp/utils.h
+	<stdio.h>
+	<stdlib.h>
+	<cstring>
+	<assert.h>
+	<iostream>
+	<map>
+	<list>
+	<array>
+	<chrono>
+	<algorithm>
+	<inttypes.h>
+	<mysql.h>
+
+1449301610 source:/var/www/html/1200/test/bplustree/mynodes/cpp/utils.cpp
+	<cstdarg>
+	<chrono>
+	"utils.h"
+
+1449299701 source:/var/www/html/1200/test/bplustree/mynodes/cpp/searchd.cpp
+	"mynodes.h"
+	"utils.h"
+

@@ -19,22 +19,6 @@ struct Document{
 };
 typedef std::map<size64_t ,std::vector<string_t>> DocCollection;
 
-/*struct DocCollection{
-    std::map<size64_t ,Document> collection;
-    bool get_doc(size64_t docid){
-        std::map<size64_t ,Document >::iterator it = collection.find(docid);
-		bool r =it != collection.end();
-		return r;
-    }
-     size64_t count(){
-		return collection.size();
-	}
-	void add(size64_t i){
-        Document doc ;
-		collection.emplace(i, doc);
-
-	}
-}*/
 struct Node{
 	string_t left;
 	string_t right;
@@ -58,7 +42,6 @@ struct Leaf{
 } ;
 struct NodeCollection{
 	std::map<string_t ,Node > m_vCollection;
-	/*NodeCollection(){	collection = std::map<string_t ,Node >();}*/
 	bool find(string_t key){
         std::map<string_t ,Node >::iterator it = m_vCollection.find(key);
 		bool r =/*is_string(key) && */ it != m_vCollection.end();
@@ -148,9 +131,9 @@ struct LeafCollection{
 
 class myNodes{
 private:
-	NodeCollection m_tPrefixNodes;
-	NodeCollection m_tSuffixNodes;
-    NodeCollection m_tPreSuffixNodes;
+	NodeCollection m_tPrefixNodes;//holds collection of nodes for prefix indexes
+	NodeCollection m_tSuffixNodes;//holds collection of nodes for suffix indexes
+    NodeCollection m_tPreSuffixNodes;//holds collection of nodes for both prefix and suffix indexes
 
 	LeafCollection m_tLeaves;
 	DocCollection m_tDocuments;
@@ -164,12 +147,11 @@ private:
 	myNodes();
 	bool doIndex();
 	bool append_source(DocCollection &src);
-
+	//routines for printing
 	void print_nodes(const bool verbose);
-
 	void print_leaves(const bool verbose);
-
 	void print_documents(const bool verbose);
+	//io routines
 	bool load_data(const char *dir);
 	bool save_data(const char *dir);
 	string_t get_document(const size64_t ind);
@@ -181,10 +163,10 @@ private:
 	bool follow(const string_t &sFirst,const string_t &sSecond,const  int iFollowMode,const bool right,LeafItemsVector *pMergedLeafItems);
 	void clearResults();
 	void doSearch(const string_t &l,const string_t &r,const int iFollowMode);
+	//io methods for nodes,leaves and documents
 	bool save_nodes(const char* dir);
 	bool save_leaves(const char* dir);
 	bool save_documents(const char *dir);
-
 	bool load_nodes(const char *dir);
 	bool load_leaves(const char *dir);
 	bool load_documents(const char *dir);

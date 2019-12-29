@@ -18,7 +18,6 @@ bool load_data_to_src(const size_t limit, DocCollection &src)
 	// connect to the mysql database
 	conn = mysql_connection_setup(mysqlD);
 	char qry[1024];
-	//qry = "select count(*) from abonne_ft_v3";
 	if (limit == 0)
 	{
 		sprintf(qry,
@@ -63,7 +62,6 @@ bool load_data_to_src(const size_t limit, DocCollection &src)
 	mysql_free_result(res);
 	/* clean up the database link */
 	mysql_close(conn);
-
 	return true;
 }
 
@@ -181,7 +179,6 @@ int main(int argc, char *argv[])
 		}
 		myprintf("\n-----------------\n");
 		myprintf("\n %llu docs found for %s\n", mynodes.m_tResultItems.size(), word);
-
 		print_time("searching done in", t_s);
 	}
 }

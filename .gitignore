@@ -1,0 +1,4 @@
+.vscode/**
+cpp/codeBlocks/obj/**
+cpp/codeBlocks/bin/**
+cpp/bin/**

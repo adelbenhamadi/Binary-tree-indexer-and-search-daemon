@@ -3,7 +3,8 @@
 
 using namespace mynodes;
 
-bool load_data_to_src(const size_t limit, DocCollection &src) {
+bool load_data_to_src(const size_t limit, DocCollection &src)
+{
 	MYSQL *conn;
 	MYSQL_RES *res;
 	MYSQL_ROW row;
@@ -18,12 +19,15 @@ bool load_data_to_src(const size_t limit, DocCollection &src) {
 	conn = mysql_connection_setup(mysqlD);
 	char qry[1024];
 	//qry = "select count(*) from abonne_ft_v3";
-	if (limit == 0) {
+	if (limit == 0)
+	{
 		sprintf(qry,
 				"select id,concat_ws(' ',nom_fr,prenom_fr) from abonne_ft_v3");
 		//sprintf(qry,"select id,concat_ws(' ',nom_fr,prenom_fr,adr_fr,loc_fr,deleg_fr,gouv_fr,act_fr,sact_fr,numero_ft) from sphinx_abonne_ft_v3");
 		//sprintf(qry,"select id,concat_ws(' ',ab.nom_fr,ab.prenom_fr),ab.adr_fr,d.deleg_fr,d.deleg_gouv_fr from abonne_ft_v3 ab right join delegs d on (ab.deleg_id = d.deleg_id)");
-	} else {
+	}
+	else
+	{
 		sprintf(qry,
 				"select id,concat_ws(' ',nom_fr,prenom_fr),loc_fr,adr_fr,deleg_fr,gouv_fr,act_fr from sphinx_abonne_ft_v3 limit 0,%d",
 				limit);
@@ -39,8 +43,9 @@ bool load_data_to_src(const size_t limit, DocCollection &src) {
 	size64_t i = 0;
 	DocCollection::iterator it = src.begin();
 	std::vector<string_t> cols;
-	while ((row = mysql_fetch_row(res)) != NULL) {
-		i = (size64_t) atoll(row[0]);
+	while ((row = mysql_fetch_row(res)) != NULL)
+	{
+		i = (size64_t)atoll(row[0]);
 
 		cols.clear();
 		for (unsigned int j = 1; j < num_fields; j++)
@@ -62,41 +67,49 @@ bool load_data_to_src(const size_t limit, DocCollection &src) {
 	return true;
 }
 
-int main(int argc, char *argv[]) {
+int main(int argc, char *argv[])
+{
 
 	bool bTesting = 0;
 	size_t iDocLimit = 100000;
 
 	int i;
-	for (i = 1; i < argc; i++) {
-		if (strcasecmp(argv[i], "--limit") == 0 && (i + 2) < argc) {
+	for (i = 1; i < argc; i++)
+	{
+		if (strcasecmp(argv[i], "--limit") == 0 && (i + 2) < argc)
+		{
 			iDocLimit = atoi(argv[i + 2]);
-
-		} else if (strcasecmp(argv[i], "--testing") == 0 && (i + 2) < argc) {
+		}
+		else if (strcasecmp(argv[i], "--testing") == 0 && (i + 2) < argc)
+		{
 			bTesting = atoi(argv[i + 2]);
-
-		} else {
+		}
+		else
+		{
 			break;
 		}
 
-		if (i != argc || argc < 2) {
-			if (argc > 1) {
-				fprintf( stdout,
+		if (i != argc || argc < 2)
+		{
+			if (argc > 1)
+			{
+				fprintf(stdout,
 						"ERROR: malformed or unknown option near '%s'.\n",
 						argv[i]);
-
-			} else {
-				fprintf( stdout,
+			}
+			else
+			{
+				fprintf(stdout,
 						"Usage: myindexer [OPTIONS] \n"
-								"\n"
-								"Options are:\n"
-								"--quiet\t\t\tbe quiet, only print errors\n"
-								"--verbose\t\tverbose indexing issues report\n"
-								"--noprogress\t\tdo not display progress\n"
-								"--limit\t\t\tonly index <limit> documents, zero or default: index all documents\n"
-								"--testing\t\t\ttesting mode for debugging\n"
-								"Examples:\n"
-								"myindexer --limit 1000\t\tindex 1000 documents\n");
+						"\n"
+						"Options are:\n"
+						"--quiet\t\t\tbe quiet, only print errors\n"
+						"--verbose\t\tverbose indexing issues report\n"
+						"--noprogress\t\tdo not display progress\n"
+						"--limit\t\t\tonly index <limit> documents, zero or default: index all documents\n"
+						"--testing\t\t\ttesting mode for debugging\n"
+						"Examples:\n"
+						"myindexer --limit 1000\t\tindex 1000 documents\n");
 			}
 
 			return 1;
@@ -106,7 +119,8 @@ int main(int argc, char *argv[]) {
 
 	DocCollection source;
 
-	if (bTesting) {
+	if (bTesting)
+	{
 		source[0].push_back("\\//aDEl aZERty let");
 		source[0].push_back("NOT YET SEARCHABLE COLUMN 1");
 		source[1].push_back("1245 LEt.. LEr AzouR$# LE");
@@ -116,8 +130,9 @@ int main(int argc, char *argv[]) {
 		source[3].push_back("!!LE aZERty ùaDEl");
 		source[4].push_back("**LEt LEr AzouR==**// le");
 		source[5].push_back("+-aDEl aZERty");
-
-	} else {
+	}
+	else
+	{
 		load_data_to_src(iDocLimit, source);
 	}
 	myprintf("\nSource : %d documents loaded!", source.size());
@@ -138,35 +153,35 @@ int main(int argc, char *argv[]) {
 	size_t climit = 0;
 	time_point_t t_s;
 
-	while (1) {
+	while (1)
+	{
 		myprintf("\nPlease enter a word to search for (press ! to quit): ");
 		scan_stdin("%s %d", 2, word, &climit);
 		if (strcasecmp(word, "!") == 0)
 			return 0;
 
 		myprintf("\n-----------------\n");
-		if (climit == 0) {
+		if (climit == 0)
+		{
 			climit = MAX_RESULT_LIMIT;
 		}
 		strToLower(word);
 		t_s = STD_NOW;
 
-		mynodes.doSearch((string_t) word);
+		mynodes.doSearch((string_t)word);
 
 		size_t i = 1;
 		for (LeafItemsVector::iterator it =
-				mynodes.m_tResultItems.begin();
-				i <= climit && it != mynodes.m_tResultItems.end();
-				++it) {
+				 mynodes.m_tResultItems.begin();
+			 i <= climit && it != mynodes.m_tResultItems.end();
+			 ++it)
+		{
 			myprintf("\n%d %llu \t%s", i++, *it,
-					mynodes.get_document(*it).c_str());
+					 mynodes.get_document(*it).c_str());
 		}
 		myprintf("\n-----------------\n");
 		myprintf("\n %llu docs found for %s\n", mynodes.m_tResultItems.size(), word);
 
 		print_time("searching done in", t_s);
-
 	}
-
 }
-

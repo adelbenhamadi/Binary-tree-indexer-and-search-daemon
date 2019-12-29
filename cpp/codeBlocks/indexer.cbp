@@ -38,7 +38,6 @@
 		</Compiler>
 		<Linker>
 			<Add option="-L/usr/local/mysql" />
-			<Add library="/home/adel/sphinx-2.3.1-beta/src/libsphinx.a" />
 			<Add library="rt" />
 			<Add library="m" />
 			<Add library="pthread" />

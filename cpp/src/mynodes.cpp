@@ -398,7 +398,7 @@ bool myNodes::save_leaves(const char *dir) {
 	char filename[PATH_MAX];
 	realpath(dir, filename);
 	strcat(filename, "/leaves.bin");
-
+    printf(filename);
 	//open file
 	if (std::FILE* fp = std::fopen(filename, "wb")) {
 		fixBufferSize(fp);

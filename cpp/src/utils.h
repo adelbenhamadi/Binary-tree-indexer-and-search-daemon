@@ -3,25 +3,65 @@
 
 #include <stddef.h>
 #include <stdio.h>
+#include <string.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <cstring>
-#include <assert.h>
+
 #include <sstream>
 #include <iostream>
 #include <fcntl.h>
-#include <sys/mman.h>
-#include <sys/stat.h>
+
+#include <assert.h>
+#include <ctype.h>
+#include <stdarg.h>
+#include <limits.h>
 #include <utility>
+
+#if _WIN32
+
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+
+#include <winsock2.h>
+
+#define strcasecmp			strcmpi
+#define strncasecmp			_strnicmp
+#define snprintf			_snprintf
+#define strtoll				_strtoi64
+#define strtoull			_strtoui64
+#define realpath(N,R) _fullpath((R),(N),_MAX_PATH)
+/* Type to represent block size.  */
+typedef long int __blksize_t;
+
+	#define snprintf	_snprintf
+	#define popen		_popen
+	#define MY_READ_MODE "rb"
+	#define MY_WRITE_MODE "wb"
+	#include <io.h>
+	#include <tlhelp32.h>
+#else
+	#include <sys/types.h>
+    #include <unistd.h>
+	#define MY_READ_MODE "r"
+	#define MY_WRITE_MODE "wb"
+#endif
+#ifdef __linux__
+#include <sys/mman.h>
+#endif
+
+
+
+#include <sys/stat.h>
+
 #include <map>
 #include <list>
 #include <array>
 #include <cstdarg>
 #include <chrono>
 #include <algorithm>
+#include <inttypes.h>
 
 #define __STDC_FORMAT_MACROS
-#include <inttypes.h>
 
 #include <mysql.h>
 

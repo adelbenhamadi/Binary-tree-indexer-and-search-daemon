@@ -1,4 +1,6 @@
 .vscode/**
-cpp/codeBlocks/obj/**
-cpp/codeBlocks/bin/**
+cpp/codeBlocks/**
+cpp/codeBlocks/**
 cpp/bin/**
+/Debug/
+.settings/**

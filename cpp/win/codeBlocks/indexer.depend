@@ -126,10 +126,10 @@
 	<math.h>
 	<mysql.h>
 
-1578141809 c:\users\adil\studioprojects\my_projects\mynodes\git\cpp\src\mynodes.h
+1578144867 c:\users\adil\studioprojects\my_projects\mynodes\git\cpp\src\mynodes.h
 	"utils.h"
 
-1578141241 source:c:\users\adil\studioprojects\my_projects\mynodes\git\cpp\src\mynodes.cpp
+1578141822 source:c:\users\adil\studioprojects\my_projects\mynodes\git\cpp\src\mynodes.cpp
 	"mynodes.h"
 	<limits.h>
 	<vector>
@@ -137,5 +137,54 @@
 	"utils.h"
 
 1578136828 source:c:\users\adil\studioprojects\my_projects\mynodes\git\cpp\src\utils.cpp
+	"utils.h"
+
+1578141347 source:c:\users\adil\studioprojects\my_projects\mynodes\binary-tree-indexer-and-search-daemon\cpp\src\indexer.cpp
+	"utils.h"
+	"mynodes.h"
+
+1578140241 c:\users\adil\studioprojects\my_projects\mynodes\binary-tree-indexer-and-search-daemon\cpp\src\utils.h
+	<stddef.h>
+	<stdio.h>
+	<string.h>
+	<stdlib.h>
+	<cstring>
+	<sstream>
+	<iostream>
+	<fcntl.h>
+	<assert.h>
+	<ctype.h>
+	<stdarg.h>
+	<limits.h>
+	<utility>
+	<windows.h>
+	<winsock2.h>
+	<io.h>
+	<tlhelp32.h>
+	<sys/types.h>
+	<unistd.h>
+	<sys/mman.h>
+	<sys/stat.h>
+	<map>
+	<list>
+	<array>
+	<cstdarg>
+	<chrono>
+	<algorithm>
+	<inttypes.h>
+	<math.h>
+	<mysql.h>
+
+1578144867 c:\users\adil\studioprojects\my_projects\mynodes\binary-tree-indexer-and-search-daemon\cpp\src\mynodes.h
+	"utils.h"
+
+1578141822 source:c:\users\adil\studioprojects\my_projects\mynodes\binary-tree-indexer-and-search-daemon\cpp\src\mynodes.cpp
+	"mynodes.h"
+	<limits.h>
+	<vector>
+	<chrono>
+	"utils.h"
+
+1578136828 source:c:\users\adil\studioprojects\my_projects\mynodes\binary-tree-indexer-and-search-daemon\cpp\src\utils.cpp
 	"utils.h"
 

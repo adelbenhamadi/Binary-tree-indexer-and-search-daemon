@@ -159,12 +159,13 @@ private:
 	string_t get_document(const u64_t ind);
 
 	void doSearch(string_t sToSearch);
+	void doSearch(const string_t &l,const string_t &r,const int iFollowMode);
 private:
 	bool create_node(string_t &word,const string_t &left);
 	bool create_node(string_t &word,const string_t &left,const string_t &right,const  int iMode,const u64_t doci);
 	bool follow(const string_t &sFirst,const string_t &sSecond,const  int iFollowMode,const bool right,LeafItemsVector_t *pMergedLeafItems);
 	void clearResults();
-	void doSearch(const string_t &l,const string_t &r,const int iFollowMode);
+
 	bool save_nodes(const char* dir);
 	bool save_leaves(const char* dir);
 	bool save_documents(const char *dir);

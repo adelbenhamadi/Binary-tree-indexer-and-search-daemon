@@ -1,6 +1,7 @@
 
-#include "mynodes.h"
 #include "utils.h"
+#include "mynodes.h"
+#include "cstring"
 
 using namespace mynodes;
 
@@ -21,8 +22,7 @@ int main(int argc, char *argv[])
 
     //searching
     myprintf("\n\nbegin searching\n");
-    //mynodes.load_data("data");
-    //const char* q= "!";
+
     const string_t sStar = "*";
     char word[32];
     size_t climit = 0;
@@ -31,11 +31,10 @@ int main(int argc, char *argv[])
     while(1){
         myprintf("\nPlease enter a word to search for (press ! to quit): ");
         scan_stdin("%s %d",2,word,&climit);
-        //if(word  == "!") return 0;
 
         myprintf("\n-----------------\n");
         if(climit==0) { climit = 1000000;}
-        lowerstr(word);
+        strToLower(word);
 
         f =word;
         std::size_t pos = f.find(sStar);
@@ -55,15 +54,14 @@ int main(int argc, char *argv[])
             f = f.substr(0,f.length()-1);
             mynodes.doSearch(f,s,1);
         }
-        //myprintf("\nf:%s s:%s",f.c_str(),s.c_str());
-        size_t i=1;
-        for(LeafItemsMap::iterator it=mynodes.resultMergedLeafItems.begin();i<=climit && it!=mynodes.resultMergedLeafItems.end();++it)
-             {
 
+        size_t i=1;
+        for(LeafItemsVector_t::iterator it=mynodes.m_tResultItems.begin();i<=climit && it!=mynodes.m_tResultItems.end();++it)
+             {
                 myprintf("\n%d %llu \t%s",i++,*it,mynodes.get_document(*it).c_str());
              }
         myprintf("\n-----------------\n");
-        myprintf("\n %llu docs found for %s\n",mynodes.resultCount,word);
+        myprintf("\n %llu docs found for %s\n",mynodes.m_iResultCount,word);
 
         print_time("searching done in",t_s);
 

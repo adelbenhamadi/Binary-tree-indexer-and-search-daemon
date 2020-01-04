@@ -12,7 +12,6 @@
 				<Option type="1" />
 				<Option compiler="gcc" />
 				<Compiler>
-					<Add option="-std=c++11" />
 					<Add option="-g" />
 				</Compiler>
 			</Target>
@@ -30,26 +29,24 @@
 			</Target>
 		</Build>
 		<Compiler>
-			<Add option="-std=c++11" />
 			<Add option="-Wall" />
+			<Add option="-std=c++11" />
 			<Add option="-fexceptions" />
-			<Add option="-I/usr/include/mysql" />
 			<Add option="-fno-strict-aliasing" />
+			<Add option="-std=gnu++11" />
 		</Compiler>
 		<Linker>
-			<Add option="-L/usr/lib/mysql" />
-			<Add option="-lmysqlclient" />
 			<Add option="-Wl,-Bsymbolic-functions" />
-			<Add option="-rdynamic" />
 		</Linker>
-		<Unit filename="../src/searchd.cpp" />
-		<Unit filename="../src/mynodes.cpp" />
-		<Unit filename="../src/mynodes.h" />
-		<Unit filename="../src/utils.cpp" />
-		<Unit filename="../src/utils.h" />
+		<Unit filename="../../src/mynodes.cpp" />
+		<Unit filename="../../src/mynodes.h" />
+		<Unit filename="../../src/searchd.cpp" />
+		<Unit filename="../../src/utils.cpp" />
+		<Unit filename="../../src/utils.h" />
 		<Extensions>
 			<code_completion />
 			<debugger />
+			<envvars />
 		</Extensions>
 	</Project>
 </CodeBlocks_project_file>

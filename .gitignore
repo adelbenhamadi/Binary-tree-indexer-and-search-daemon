@@ -1,6 +1,5 @@
 .vscode/**
-cpp/codeBlocks/**
-cpp/codeBlocks/**
-cpp/bin/**
-/Debug/
+cpp/win/codeBlocks/data/**
+cpp/win/codeBlocks/obj/**
 .settings/**
+*.key

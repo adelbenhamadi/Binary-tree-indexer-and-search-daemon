@@ -32,11 +32,11 @@ bool load_data_to_src(const size_t limit, DocCollection &src) {
 	res = mysql_perform_query(conn, qry);
 	unsigned long num_fields = mysql_num_fields(res);
 
-	size64_t i = 0;
+	u64_t i = 0;
 	DocCollection::iterator it = src.begin();
-	std::vector<string_t> cols;
+	sVector_t cols;
 	while ((row = mysql_fetch_row(res)) != NULL) {
-		i = (size64_t) atoll(row[0]);
+		i = (u64_t) atoll(row[0]);
 
 		cols.clear();
 		for (unsigned int j = 1; j < num_fields; j++)
@@ -45,7 +45,7 @@ bool load_data_to_src(const size_t limit, DocCollection &src) {
 			else
 				cols.push_back("\0");
 
-		src.insert(it, std::pair<size64_t, std::vector<string_t>>(i, cols));
+		src.insert(it, std::pair<u64_t, sVector_t>(i, cols));
 
 		// myprintf("\n inserted %llu => %s",i,(char*)row[1]);
 	}
@@ -61,7 +61,7 @@ bool load_data_to_src(const size_t limit, DocCollection &src) {
 int main(int argc, char *argv[]) {
 
 	bool bTesting = 0;
-	size_t iDocLimit = 10000;
+	size_t iDocLimit = 1000000;
 
 	int i;
 	for (i = 1; i < argc; i++) {
@@ -119,7 +119,7 @@ int main(int argc, char *argv[]) {
 	myprintf("\nSource : %d documents loaded!", source.size());
 
 	mynodes.append_source(source);
-	mynodes.doIndex();
+	mynodes.buildIndex();
 	if (!bTesting)
 		mynodes.save_data("data");
 
@@ -150,7 +150,7 @@ int main(int argc, char *argv[]) {
 		mynodes.doSearch((string_t) word);
 
 		size_t i = 1;
-		for (LeafItemsVector::iterator it =
+		for (LeafItemsVector_t::iterator it =
 				mynodes.m_tResultItems.begin();
 				i <= climit && it != mynodes.m_tResultItems.end();
 				++it) {

@@ -3,21 +3,14 @@
 #endif
 
 #include <limits.h>
-
 #include <vector>
-
 #include <chrono>
-
 #include "utils.h"
-/*
- using std::map;
- using std::swap;
- using std::binary_search;
- using std::lower_bound;
- using std::upper_bound;
- */
+
 
 namespace mynodes {
+
+
 
 myNodes::myNodes() {
 
@@ -39,16 +32,16 @@ bool myNodes::append_source(DocCollection &src) {
 	m_tDocuments = src;
 	return true;
 }
-bool myNodes::doIndex() {
+bool myNodes::buildIndex() {
 
-	std::vector<string_t> arr;
+	sVector_t arr;
 
 	myprintf("\n start processing documents :%d  documents\n---------\n",
 			m_tDocuments.size());
 	int co = 1;
 	time_point_t t_s = STD_NOW;
 	for (auto &doc : m_tDocuments) {
-		size64_t docId = doc.first;
+		u64_t docId = doc.first;
 		string_t document = doc.second[m_iCurrentCol];
 		normalize_word(document);
 
@@ -57,7 +50,7 @@ bool myNodes::doIndex() {
 		}
 
 		arr = explode(document, ' ');
-		std::vector<string_t>::size_type sz = arr.size();
+		sVector_t::size_type sz = arr.size();
 		for (unsigned i = 0; i < sz; i++) {
 			string_t word = arr[i];
 
@@ -115,7 +108,7 @@ bool myNodes::create_node(string_t &word, const string_t &left) {
 }
 
 bool myNodes::create_node(string_t &word, const string_t &left,
-		const string_t &right, const int iMode, const size64_t iDoc) {
+		const string_t &right, const int iMode, const u64_t iDoc) {
 	string_t parent;
 	switch (iMode) {
 
@@ -154,7 +147,7 @@ bool myNodes::create_node(string_t &word, const string_t &left,
 }
 
 bool myNodes::follow(const string_t &sFirst, const string_t &sSecond,
-		const int iFollowMode, const bool right,LeafItemsVector *pMergedLeafItems) {
+		const int iFollowMode, const bool right,LeafItemsVector_t *pMergedLeafItems) {
 	NodeCollection* tNodeCol;
 	switch (iFollowMode) {
 	case 0:     //suffix searching like *ty
@@ -179,34 +172,35 @@ bool myNodes::follow(const string_t &sFirst, const string_t &sSecond,
 	if (!tNodeCol->find(sFirst))
 		return false;
 
-	debugPrintf("\n follow %s-%s",sFirst.c_str(),sSecond.c_str());
+	debugPrintf(6,"\n follow %s-%s",sFirst.c_str(),sSecond.c_str());
 	//check before merging
 	bool bCanMerge = m_tLeaves.find(sFirst);
 	if (iFollowMode == 2) {
 		bCanMerge &= hasSuffix(sFirst, sSecond);
 	}
 	if (bCanMerge) {
-		debugPrintf(" %s(%llu) ",sFirst.c_str(),m_tLeaves.m_vCollection[sFirst].count());
+		debugPrintf(6,"canMerge %s(%llu) ",sFirst.c_str(),m_tLeaves.m_vCollection[sFirst].count());
 		//merge results
-		LeafItemsVector::iterator it = pMergedLeafItems->begin();
+		LeafItemsVector_t::iterator it = pMergedLeafItems->begin();
 		pMergedLeafItems->insert(it,
 				m_tLeaves.m_vCollection[sFirst].m_vItems.begin(),
 				m_tLeaves.m_vCollection[sFirst].m_vItems.end());
 
-		if (ciDEBUG_LEVEL > 2) {
+		if (DEBUG_LEVEL > 2) //TODO remove
+            {
 			pMergedLeafItems->sort();
 			pMergedLeafItems->unique();
 			m_iResultCount = pMergedLeafItems->size();
 			myprintf("\nbefore merge:");
 			for (it = m_tLeaves.m_vCollection[sFirst].m_vItems.begin();
 					it != m_tLeaves.m_vCollection[sFirst].m_vItems.end(); ++it) {
-				myprintf(" %llu", (size64_t )*it);
+				myprintf(" %llu", (u64_t )*it);
 
 			}
 			myprintf("\nafter merge:");
 			for (it = pMergedLeafItems->begin();
 					it != pMergedLeafItems->end(); ++it) {
-				myprintf(" %llu", (size64_t )*it);
+				myprintf(" %llu", (u64_t )*it);
 			}
 		}
 
@@ -320,8 +314,8 @@ bool myNodes::save_nodes(const char *dir) {
 		fixBufferSize(fp);
 
 		//write count
-		size64_t co = m_tPrefixNodes.m_vCollection.size();
-		std::fwrite(&co, sizeof(size64_t), 1, fp);
+		u64_t co = m_tPrefixNodes.m_vCollection.size();
+		std::fwrite(&co, sizeof(u64_t), 1, fp);
 		//write collection
 
 		for (auto &it : m_tPrefixNodes.m_vCollection) {
@@ -333,7 +327,7 @@ bool myNodes::save_nodes(const char *dir) {
 		}
 		//write count
 		co = m_tSuffixNodes.m_vCollection.size();
-		std::fwrite(&co, sizeof(size64_t), 1, fp);
+		std::fwrite(&co, sizeof(u64_t), 1, fp);
 		//write collection
 
 		for (auto &it : m_tSuffixNodes.m_vCollection) {
@@ -362,27 +356,27 @@ bool myNodes::load_nodes(const char *dir) {
 	if (std::FILE* fp = std::fopen(filename, "r")) {
 		fixBufferSize(fp);
 		//read count
-		size64_t co;
+		u64_t co;
 		string_t word, left, right;
-		std::fread(&co, sizeof(size64_t), 1, fp);
-		for (size64_t i = 0; i < co; i++) {
+		std::fread(&co, sizeof(u64_t), 1, fp);
+		for (u64_t i = 0; i < co; i++) {
 
 			word = readStringFromBinFile(fp);
 			left = readStringFromBinFile(fp);
 			right = readStringFromBinFile(fp);
-			if (ciDEBUG_LEVEL > 2)
+			if (DEBUG_LEVEL > 2) //TODO remove
 				myprintf("\nreading node: %s <-- %s --> %s", left.c_str(),
 						word.c_str(), right.c_str());
 			m_tPrefixNodes.add2(word, left, right);
 
 		}
-		std::fread(&co, sizeof(size64_t), 1, fp);
-		for (size64_t i = 0; i < co; i++) {
+		std::fread(&co, sizeof(u64_t), 1, fp);
+		for (u64_t i = 0; i < co; i++) {
 
 			word = readStringFromBinFile(fp);
 			left = readStringFromBinFile(fp);
 			right = readStringFromBinFile(fp);
-			debugPrintf("\nadding node: %s <-- %s --> %s",left.c_str(),word.c_str(),right.c_str());
+			debugPrintf(5,"\nadding node: %s <-- %s --> %s",left.c_str(),word.c_str(),right.c_str());
 			m_tSuffixNodes.add2(word, left, right);
 
 		}
@@ -398,28 +392,32 @@ bool myNodes::save_leaves(const char *dir) {
 	char filename[PATH_MAX];
 	realpath(dir, filename);
 	strcat(filename, "/leaves.bin");
-    printf(filename);
+    //printf(filename);
 	//open file
 	if (std::FILE* fp = std::fopen(filename, "wb")) {
 		fixBufferSize(fp);
 		//write count
-		size64_t co = m_tLeaves.m_vCollection.size();
-		std::fwrite(&co, sizeof(size64_t), 1, fp);
+		u64_t co = m_tLeaves.m_vCollection.size();
+		std::fwrite(&co, sizeof(u64_t), 1, fp);
 		//write collection
 		size_t sz = 0;
 		for (auto &it : m_tLeaves.m_vCollection) {
 
 			writeStringToBinFile(it.first, fp);
 			co = it.second.m_vItems.size();
-			sz = std::fwrite(&co, sizeof(size64_t), 1, fp);
+			sz = std::fwrite(&co, sizeof(u64_t), 1, fp);
 			assert(sz == 1);
+			u64_t arrSz = co>g_iMaxLeafSize? g_iMaxLeafSize:co   ;
+			debugPrintf(1,"\nwriting %s => %llu items",it.first.c_str(),arrSz);
 			if (co > 0) {
-				size64_t arr[co];
-				std::copy(it.second.m_vItems.begin(), it.second.m_vItems.end(), arr);
-				sz = std::fwrite((char*) &arr[0], co * sizeof(size64_t), 1, fp);
+
+				u64_t arr[arrSz];
+				std::copy_n(it.second.m_vItems.begin(), arrSz, arr);
+				sz = std::fwrite((char*) &arr[0], arrSz * sizeof(u64_t), 1, fp);
 
 				assert(sz == 1);
-			} debugPrintf("\nwriting %s => %llu items",it.first.c_str(),co);
+			}
+
 
 		}
 		std::fclose(fp);
@@ -443,19 +441,19 @@ bool myNodes::load_leaves(const char *dir) {
 		//read count
 		string_t word;
 		size_t sz, ico;
-		size64_t leavesCount;
-		std::fread(&leavesCount, sizeof(size64_t), 1, fp);
-		for (size64_t i = 0; i < leavesCount; i++) {
+		u64_t leavesCount;
+		std::fread(&leavesCount, sizeof(u64_t), 1, fp);
+		for (u64_t i = 0; i < leavesCount; i++) {
 			word = readStringFromBinFile(fp);
 			m_tLeaves.add(word);
 
 			//read items count
-			sz = std::fread(&ico, sizeof(size64_t), 1, fp);
+			sz = std::fread(&ico, sizeof(u64_t), 1, fp);
 			assert(sz == 1);
 
-			size64_t arr[ico];
+			u64_t arr[ico];
 			arr[ico]= {0};
-			sz = std::fread((char*) &arr[0], ico * sizeof(size64_t), 1, fp);
+			sz = std::fread((char*) &arr[0], ico * sizeof(u64_t), 1, fp);
 			assert(sz == 1);
 			m_tLeaves.m_vCollection[word].m_vItems.insert(
 					m_tLeaves.m_vCollection[word].m_vItems.begin(), arr, arr + ico);
@@ -478,14 +476,14 @@ bool myNodes::save_documents(const char *dir) {
 	if (std::FILE* fp = std::fopen(filename, "wb")) {
 		fixBufferSize(fp, 8192 * 8);
 
-		size64_t docid, co;
+		u64_t docid, co;
 		size_t co2;
 		//write count
 		co = m_tDocuments.size();
-		std::fwrite(&co, sizeof(size64_t), 1, fp);
+		std::fwrite(&co, sizeof(u64_t), 1, fp);
 		for (auto &doc : m_tDocuments) {
 			docid = doc.first;
-			std::fwrite(&docid, sizeof(size64_t), 1, fp);
+			std::fwrite(&docid, sizeof(u64_t), 1, fp);
 			co2 = doc.second.size();
 			std::fwrite(&co2, sizeof(size_t), 1, fp);
 			for (auto& v : doc.second)
@@ -510,16 +508,16 @@ bool myNodes::load_documents(const char *dir) {
 		fixBufferSize(fp);
 		//read count
 		string_t content;
-		size64_t co, docid;
+		u64_t co, docid;
 		size_t co2;
-		std::fread(&co, sizeof(size64_t), 1, fp);
-		for (size64_t i = 0; i < co; i++) {
-			std::fread(&docid, sizeof(size64_t), 1, fp);
+		std::fread(&co, sizeof(u64_t), 1, fp);
+		for (u64_t i = 0; i < co; i++) {
+			std::fread(&docid, sizeof(u64_t), 1, fp);
 			std::fread(&co2, sizeof(size_t), 1, fp);
 			for (unsigned int j = 0; j < co2; j++) {
 				content = readStringFromBinFile(fp);
 				m_tDocuments[docid].push_back(content);
-				if (ciDEBUG_LEVEL > 2)
+				if (DEBUG_LEVEL > 2) //TODO remove
 					myprintf("\nreading doc %llu => %s ", docid,
 							content.c_str());
 			}
@@ -561,7 +559,7 @@ bool myNodes::load_data(const char* dir) {
 	print_time(" Documents loaded in",t_s);
 	return true;
 }
-string_t myNodes::get_document(const size64_t ind) {
+string_t myNodes::get_document(const u64_t ind) {
 	string_t doc;
 	for (auto& v : m_tDocuments[ind])
 		doc = doc + "\t" + v;

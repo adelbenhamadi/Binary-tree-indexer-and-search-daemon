@@ -18,7 +18,6 @@ void strToLower(char *s)
 void normalize_word(string_t &word){
     std::transform(word.begin(), word.end(), word.begin(), ::tolower);
     word.erase(remove_if(word.begin(), word.end(), [](char c) { return !isspace(c) && !isalnum(c) ; } ), word.end());
-    //return word;
 }
 void scan_stdin(const char* fmt,const int co, ...)
 {
@@ -52,9 +51,9 @@ MYSQL_RES* mysql_perform_query(MYSQL *connection, char *sql_query)
 
    return mysql_use_result(connection);
 }
-std::vector<string_t> scan_exp(const string_t& exp){
+sVector_t scan_exp(const string_t& exp){
     string_t  expc= exp, temp;
-    std::vector< string_t > tokens;
+    sVector_t tokens;
     tokens.clear();
     while (expc.find(" ", 0) != STD_NPOS)
       { //does the string a comma in it?
@@ -121,7 +120,7 @@ string_t readStringFromBinFile(const int fdes) {
 	return st;
 }
 
-size64_t getFilesize(const char* filename) {
+u64_t getFilesize(const char* filename) {
 	struct stat st;
 	stat(filename, &st);
 	return st.st_size;
@@ -134,8 +133,8 @@ bool hasSuffix(const string_t& in, const string_t & suf) {
 	string_t f = in.substr(pos);     // get from pos to the end
 	return f == suf;
 }
-std::vector<string_t> explode(string_t const & s, char delim) {
-	std::vector<string_t> result;
+sVector_t explode(string_t const & s, char delim) {
+	sVector_t result;
 	std::istringstream iss(s);
 
 	for (std::string token; std::getline(iss, token, delim);) {
@@ -144,9 +143,9 @@ std::vector<string_t> explode(string_t const & s, char delim) {
 
 	return result;
 }
-string_t implode(std::vector<string_t> & elements, char delim) {
+string_t implode(sVector_t & elements, char delim) {
 	string_t full;
-	for (std::vector<string_t>::iterator it = elements.begin();
+	for (sVector_t::iterator it = elements.begin();
 			it != elements.end(); ++it) {
 		full += (*it);
 		if (it != elements.end() - 1)

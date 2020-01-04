@@ -8,50 +8,34 @@
 #define ENABLE_PRE_SUFFIX 0
 
 namespace mynodes {
-
-const int ciDEBUG_LEVEL = 0;
+const u64_t g_iMaxLeafSize =100000;
 
 const string_t csKEY_ZERO ="*";
 
 struct Document{
-    size64_t id;
+    u64_t id;
     string_t text;
 };
-typedef std::map<size64_t ,std::vector<string_t>> DocCollection;
+typedef std::map<u64_t ,sVector_t> DocCollection;
 
-/*struct DocCollection{
-    std::map<size64_t ,Document> collection;
-    bool get_doc(size64_t docid){
-        std::map<size64_t ,Document >::iterator it = collection.find(docid);
-		bool r =it != collection.end();
-		return r;
-    }
-     size64_t count(){
-		return collection.size();
-	}
-	void add(size64_t i){
-        Document doc ;
-		collection.emplace(i, doc);
 
-	}
-}*/
 struct Node{
 	string_t left;
 	string_t right;
 	Node(){left = csKEY_ZERO;right = csKEY_ZERO;}
     Node(const string_t &l, const string_t &r){	left = l;right = r;}
 } ;
-typedef std::pair<const string_t ,Node > NodeCollectionIterator;
-typedef std::list<size64_t> LeafItemsVector;
+typedef std::pair<const string_t ,Node > NodeCollectionIterator_t;
+typedef std::list<u64_t> LeafItemsVector_t;
 struct Leaf{
-	LeafItemsVector  m_vItems;
-    /*Leaf(){ items = std::map<size64_t ,size64_t>();}*/
-	bool addItem(size64_t iDoc){
+	LeafItemsVector_t  m_vItems;
+    /*Leaf(){ items = std::map<u64_t ,u64_t>();}*/
+	bool addItem(u64_t iDoc){
 		m_vItems.push_back(iDoc);
-		debugPrintf("\nLeaf.addItem()  iDoc %llu",iDoc);
+		debugPrintf(5,"\nLeaf.addItem()  iDoc %llu",iDoc);
 		return true;
 	}
-	size64_t count(){
+	u64_t count(){
 		return m_vItems.size();
 	}
 
@@ -64,35 +48,35 @@ struct NodeCollection{
 		bool r =/*is_string(key) && */ it != m_vCollection.end();
 		return r;
 	}
-	size64_t count(){
+	u64_t count(){
 		return m_vCollection.size();
 	}
 	void add(string_t &n,const string_t &left,const string_t &right){
         assert(!n.empty());
-        debugPrintf("\nNodeCollection.add() %s , Left: %s, Right: %s",n.c_str(),left.c_str(),right.c_str());
+        debugPrintf(4,"\nNodeCollection.add() %s , Left: %s, Right: %s",n.c_str(),left.c_str(),right.c_str());
 		if(!find(n)){
             Node node =  Node(left,right) ;
 			m_vCollection.emplace(n, node);
 
-			debugPrintf("\nnew Node: %s",n.c_str());
+			debugPrintf(5,"\nnew Node: %s",n.c_str());
 
 		}
         else if(!left.empty()){
 
 			string_t firstChild =m_vCollection[n].left;
-			debugPrintf("\nfirstChild  = %s",firstChild.c_str());
+			debugPrintf(6,",\nfirstChild  = %s",firstChild.c_str());
 			if( firstChild == csKEY_ZERO){
 				m_vCollection.at(n).left = left;
-				debugPrintf("\nnode $n --> left = %s",left.c_str());
+				debugPrintf(6,"\nnode $n --> left = %s",left.c_str());
 			}
 			else if(firstChild != left)
 			{
 			string_t mostright = get_most_right(firstChild,left);
-			debugPrintf("\nmostright %s",mostright.c_str());
+			debugPrintf(6,",\nmostright %s",mostright.c_str());
 			assert(find(mostright));
 			if( left != mostright){
 				m_vCollection.at(mostright).right = left;
-				debugPrintf("\nnode %s --> right = %s",mostright.c_str(),left.c_str());
+				debugPrintf(6,"\nnode %s --> right = %s",mostright.c_str(),left.c_str());
 			}
 		  }
 		}
@@ -103,7 +87,7 @@ struct NodeCollection{
         assert(!find(word));
         Node node = Node(left,right);
         m_vCollection.emplace(word,node) ;
-        debugPrintf("\nnew Node: %s <-- %s --> %s",left.c_str(),word.c_str(),right.c_str());
+        debugPrintf(5,"\nnew Node: %s <-- %s --> %s",left.c_str(),word.c_str(),right.c_str());
 	}
 	inline string_t get_most_right(string_t &n,const string_t &compareto ){
 		//assert(find(n));
@@ -136,13 +120,13 @@ struct LeafCollection{
 		bool r =/*is_string(key) && */ it != m_vCollection.end();
 		return r;
 	}
-	size64_t count(){
+	u64_t count(){
 		return m_vCollection.size();
 	}
 	void add(string_t n){
         Leaf leaf ;
 		m_vCollection.emplace(n, leaf);
-		debugPrintf("\nLeafCollection.add()  for %s",n.c_str());
+		debugPrintf(4,"\nLeafCollection.add()  for %s",n.c_str());
 	}
 };
 
@@ -158,11 +142,11 @@ private:
 
 
  public:
-    size64_t m_iResultCount;
-    LeafItemsVector m_tResultItems;
+    u64_t m_iResultCount;
+    LeafItemsVector_t m_tResultItems;
     int m_iCurrentMode;
 	myNodes();
-	bool doIndex();
+	bool buildIndex();
 	bool append_source(DocCollection &src);
 
 	void print_nodes(const bool verbose);
@@ -172,13 +156,13 @@ private:
 	void print_documents(const bool verbose);
 	bool load_data(const char *dir);
 	bool save_data(const char *dir);
-	string_t get_document(const size64_t ind);
+	string_t get_document(const u64_t ind);
 
 	void doSearch(string_t sToSearch);
 private:
 	bool create_node(string_t &word,const string_t &left);
-	bool create_node(string_t &word,const string_t &left,const string_t &right,const  int iMode,const size64_t doci);
-	bool follow(const string_t &sFirst,const string_t &sSecond,const  int iFollowMode,const bool right,LeafItemsVector *pMergedLeafItems);
+	bool create_node(string_t &word,const string_t &left,const string_t &right,const  int iMode,const u64_t doci);
+	bool follow(const string_t &sFirst,const string_t &sSecond,const  int iFollowMode,const bool right,LeafItemsVector_t *pMergedLeafItems);
 	void clearResults();
 	void doSearch(const string_t &l,const string_t &r,const int iFollowMode);
 	bool save_nodes(const char* dir);

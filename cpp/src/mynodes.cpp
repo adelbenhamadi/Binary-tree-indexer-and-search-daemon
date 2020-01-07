@@ -38,9 +38,10 @@ bool myNodes::buildIndex() {
 
 	myprintf("\n start processing documents :%d  documents\n---------\n",
 			m_tDocuments.size());
-	int co = 1;
-	time_point_t t_s = STD_NOW;
+	int co = 0;
+	timePoint_t t_s = STD_NOW;
 	for (auto &doc : m_tDocuments) {
+        co++;
 		u64_t docId = doc.first;
 		string_t document = doc.second[m_iCurrentCol];
 		normalize_word(document);
@@ -51,12 +52,15 @@ bool myNodes::buildIndex() {
 
 		arr = explode(document, ' ');
 		sVector_t::size_type sz = arr.size();
+
 		for (unsigned i = 0; i < sz; i++) {
 			string_t word = arr[i];
 
-			if (word.empty()) {
+			if (word.empty() || word.size()< g_iMinKeywordSize) {
 				continue;
 			}
+			//TODO add stop Words check here
+
 			m_iCurrentMode = 1;
 			if (!m_tPrefixNodes.find(word))
 				create_node(word, csKEY_ZERO);
@@ -67,9 +71,20 @@ bool myNodes::buildIndex() {
 				create_node(word, csKEY_ZERO);
 			//create_node(word,key_zero,key_zero,0,docId);
 
-			if (!m_tLeaves.find(word))
+			if (!m_tLeaves.find(word)){
 				m_tLeaves.add(word);
-			m_tLeaves.m_vCollection[word].addItem(docId);
+				//newLeaf.reserve(1000);
+		}
+		    m_tLeaves.m_vCollection[word].addItem(docId);
+
+		/*	if (!m_tLeaves.find(word)){
+				Leaf newLeaf = m_tLeaves.add(word);
+				//newLeaf.reserve(1000);
+				newLeaf.addItem(docId);
+		}else{
+		    m_tLeaves.m_vCollection[word].addItem(docId);
+		}
+*/
 
 		}
 
@@ -77,13 +92,13 @@ bool myNodes::buildIndex() {
 			myprintf("\r %d m_tDocuments processed", co);
 			fflush(stdout);
 		}
-		co++;
+
 
 	}
 	std::chrono::high_resolution_clock::time_point te = STD_NOW;
 	float duration = std::chrono::duration_cast<std::chrono::microseconds>(
 			te - t_s).count();
-	myprintf("\r %d documents processed in %8.4f seconds", co - 1,
+	myprintf("\r %d documents processed in %8.4f seconds", co,
 			duration / 1000000);
 	return true;
 }
@@ -188,6 +203,7 @@ bool myNodes::follow(const string_t &sFirst, const string_t &sSecond,
 
 		if (DEBUG_LEVEL > 2) //TODO remove
             {
+
 			pMergedLeafItems->sort();
 			pMergedLeafItems->unique();
 			m_iResultCount = pMergedLeafItems->size();
@@ -202,7 +218,9 @@ bool myNodes::follow(const string_t &sFirst, const string_t &sSecond,
 					it != pMergedLeafItems->end(); ++it) {
 				myprintf(" %llu", (u64_t )*it);
 			}
+
 		}
+
 
 	}
 	//no need to follow for exact searching
@@ -516,7 +534,7 @@ bool myNodes::load_documents(const char *dir) {
 			std::fread(&co2, sizeof(size_t), 1, fp);
 			for (unsigned int j = 0; j < co2; j++) {
 				content = readStringFromBinFile(fp);
-				m_tDocuments[docid].push_back(content);
+				m_tDocuments[docid].emplace_back(content);
 				if (DEBUG_LEVEL > 2) //TODO remove
 					myprintf("\nreading doc %llu => %s ", docid,
 							content.c_str());
@@ -532,7 +550,7 @@ bool myNodes::load_documents(const char *dir) {
 	return true;
 }
 bool myNodes::save_data(const char* dir) {
-	time_point_t t_s = STD_NOW;
+	timePoint_t t_s = STD_NOW;
 	save_leaves(dir);
 	print_time(" Leaves saved in",t_s);
 
@@ -546,7 +564,7 @@ bool myNodes::save_data(const char* dir) {
 	return true;
 }
 bool myNodes::load_data(const char* dir) {
-	time_point_t t_s = STD_NOW;
+	timePoint_t t_s = STD_NOW;
 	load_leaves(dir);
 	print_time(" Leaves loaded in",t_s);
 

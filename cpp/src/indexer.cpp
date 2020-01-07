@@ -35,10 +35,13 @@ bool load_data_to_src(const size_t limit, DocCollection &src) {
 	u64_t i = 0;
 	DocCollection::iterator it = src.begin();
 	sVector_t cols;
+	//cols.reserve(num_fields);
+
 	while ((row = mysql_fetch_row(res)) != NULL) {
 		i = (u64_t) atoll(row[0]);
 
 		cols.clear();
+
 		for (unsigned int j = 1; j < num_fields; j++)
 			if (row[j])
 				cols.push_back(row[j]);
@@ -60,8 +63,10 @@ bool load_data_to_src(const size_t limit, DocCollection &src) {
 
 int main(int argc, char *argv[]) {
 
-	bool bTesting = 0;
-	size_t iDocLimit = 1000000;
+	bool bTesting = 1;
+	bool verbose = 0;
+	size_t iDocLimit = 10000;
+	int iMaxWordsPerDoc = 1000;
 
 	int i;
 	for (i = 1; i < argc; i++) {
@@ -103,15 +108,27 @@ int main(int argc, char *argv[]) {
 	DocCollection source;
 
 	if (bTesting) {
-		source[0].push_back("\\//aDEl aZERty let");
-		source[0].push_back("NOT YET SEARCHABLE COLUMN 1");
-		source[1].push_back("1245 LEt.. LEr AzouR$# LE");
-		source[1].push_back("NOT YET SEARCHABLE COLUMN 1");
-		source[1].push_back("NOT YET SEARCHABLE COLUMN 2");
-		source[2].push_back("?aDEl LEs abs LEs LEr");
-		source[3].push_back("!!LE aZERty ùaDEl");
-		source[4].push_back("**LEt LEr AzouR==**// le");
-		source[5].push_back("+-aDEl aZERty");
+       myprintf("\nin Testing mode..");
+
+
+       std::string tmp;
+       for(u64_t i=0;i<iDocLimit;i++){
+        tmp = "";
+        sVector_t doc ;
+         for(int j=0;j<iMaxWordsPerDoc;j++){
+           tmp += random_string(j)  ;
+
+         }
+        doc.push_back(tmp);
+        if(verbose && i % 1000 == 0){
+            myprintf("\n random doc: %s\r\n",tmp.c_str());
+        }
+
+        source.insert(source.begin(), std::pair<u64_t, sVector_t>(i, doc));
+        if( i % 1000 == 0)
+            myprintf("\r\t%lu random documents generated",i);
+            fflush(stdout);
+       }
 
 	} else {
 		load_data_to_src(iDocLimit, source);
@@ -123,16 +140,16 @@ int main(int argc, char *argv[]) {
 	if (!bTesting)
 		mynodes.save_data("data");
 
-	mynodes.print_documents(bTesting || (iDocLimit > 0 && iDocLimit <= 10));
-	mynodes.print_nodes(bTesting);
-	mynodes.print_leaves(bTesting);
+	mynodes.print_documents(verbose || (iDocLimit > 0 && iDocLimit <= 10));
+	mynodes.print_nodes(verbose);
+	mynodes.print_leaves(verbose);
 
 	//searching
 	myprintf("\n\nbegin searching\n");
 
 	char word[32];
 	size_t climit = 0;
-	time_point_t t_s;
+	timePoint_t t_s;
 
 	while (1) {
 		myprintf("\nPlease enter a word to search for (press ! to quit): ");
@@ -159,7 +176,7 @@ int main(int argc, char *argv[]) {
 			myprintf("\n%d %llu \t%s", i++, *it,str.c_str());
 		}
 		myprintf("\n-----------------\n");
-		myprintf("\n %llu docs found for %s\n", mynodes.m_tResultItems.size(), word);
+		myprintf("\n %llu docs found for %s\n", (u64_t )*(mynodes.m_tResultItems.begin()), ((string_t) word).c_str());
 
 		print_time("searching done in", t_s);
 

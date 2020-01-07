@@ -9,7 +9,7 @@
 
 namespace mynodes {
 const u64_t g_iMaxLeafSize =100000;
-
+const int g_iMinKeywordSize = 3;
 const string_t csKEY_ZERO ="*";
 
 struct Document{
@@ -31,12 +31,15 @@ struct Leaf{
 	LeafItemsVector_t  m_vItems;
     /*Leaf(){ items = std::map<u64_t ,u64_t>();}*/
 	bool addItem(u64_t iDoc){
-		m_vItems.push_back(iDoc);
+		m_vItems.emplace_back(iDoc);
 		debugPrintf(5,"\nLeaf.addItem()  iDoc %llu",iDoc);
 		return true;
 	}
 	u64_t count(){
 		return m_vItems.size();
+	}
+	void reserve(int n){
+	 //   m_vItems.reserve(n);
 	}
 
 } ;
@@ -126,8 +129,15 @@ struct LeafCollection{
 	void add(string_t n){
         Leaf leaf ;
 		m_vCollection.emplace(n, leaf);
-		debugPrintf(4,"\nLeafCollection.add()  for %s",n.c_str());
+		debugPrintf(5,"\nLeafCollection.add()  for %s",n.c_str());
+
 	}
+	/*Leaf add(string_t n){
+        Leaf leaf ;
+		m_vCollection.emplace(n, leaf);
+		debugPrintf(5,"\nLeafCollection.add()  for %s",n.c_str());
+		return leaf;
+	}*/
 };
 
 class myNodes{

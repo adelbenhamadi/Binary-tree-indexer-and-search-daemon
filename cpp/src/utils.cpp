@@ -2,8 +2,37 @@
 #include "utils.h"
 namespace mynodes {
 
-void print_time(const char* mess,time_point_t t_s){
-    time_point_t te = STD_NOW;
+std::string random_string(int seed){
+
+    std::string possible_characters = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+
+    auto seed2 =  std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    std::mt19937 engine(seed*5+seed2);
+    std::uniform_int_distribution<> dist(0, possible_characters.size()-1);
+    int irand = dist(engine) % 16 + 3;
+    std::string ret = "";
+    for(int i = 0; i < irand; i++){
+        int irand = dist(engine); //get index between 0 and possible_characters.size()-1
+        ret += possible_characters[irand];
+    }
+    return ret+" ";
+}
+std::string random_string2()
+{
+     std::string possible_characters("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz");
+        /* initialize random seed: */
+     std::random_device rd;
+     std::mt19937 generator(rd());
+
+     std::shuffle(possible_characters.begin(), possible_characters.end(), generator);
+
+     std::uniform_int_distribution<> dist(0, 16);
+     int irand = dist(rd) % 16 + 3;
+     return possible_characters.substr(0, irand) + " ";    // assumes 32 < number of characters in possible_characters
+}
+
+void print_time(const char* mess,timePoint_t t_s){
+    timePoint_t te = STD_NOW;
 
     float duration = std::chrono::duration_cast<std::chrono::microseconds>( te - t_s ).count();
     myprintf("\n%s %8.3f milliseconds",mess,duration/1000);

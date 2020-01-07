@@ -1,4 +1,5 @@
 .vscode/**
+cpp/win/vscode/**
 cpp/win/codeBlocks/data/**
 cpp/win/codeBlocks/obj/**
 .settings/**

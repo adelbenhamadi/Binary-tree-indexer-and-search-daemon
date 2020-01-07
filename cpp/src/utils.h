@@ -68,6 +68,7 @@ typedef long int __blksize_t;
 
 #define STD_NPOS std::string::npos
 #define STD_NOW std::chrono::high_resolution_clock::now()
+
 #define DEBUG_LEVEL 1
 #define DEBUG_MODE 1
 #if DEBUG_MODE
@@ -75,6 +76,7 @@ typedef long int __blksize_t;
 #else
 #define debugPrintf(_args ...)
 #endif
+
 #define myprintf(_args ...) std::fprintf(stdout, _args)
 #define print_err(_args ...) std::fprintf(stderr, _args)
 
@@ -84,7 +86,7 @@ typedef std::string string_t;
 typedef std::vector<string_t> sVector_t;
 typedef std::vector<int32_t> i32Vector_t;
 typedef std::vector<u64_t> u64Vector_t;
-typedef std::chrono::high_resolution_clock::time_point time_point_t;
+typedef std::chrono::high_resolution_clock::time_point timePoint_t;
 
 
 struct serverConnectionConfig {
@@ -97,7 +99,8 @@ MYSQL* mysql_connection_setup(struct serverConnectionConfig mysql_details);
 MYSQL_RES* mysql_perform_query(MYSQL *connection, char *sql_query);
 
 void normalize_word(string_t &word);
-void print_time(const char* mess, time_point_t t_s);
+std::string random_string(int seed);
+void print_time(const char* mess, timePoint_t t_s);
 void strToLower(char *s);
 void scan_stdin(const char* fmt, const int co, ...);
 sVector_t scan_exp(const string_t& exp);

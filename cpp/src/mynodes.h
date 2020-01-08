@@ -5,7 +5,7 @@
 #include "utils.h"
 
 #define MAX_RESULT_LIMIT 1000000
-#define ENABLE_PRE_SUFFIX 0
+#define ENABLE_INFIX 0
 
 namespace mynodes {
 
@@ -15,25 +15,50 @@ static  u64_t 		g_iMaxLeafSize =100000;
 static  int 		g_iMinKeywordSize = 3;
 
 const string_t csKEY_ZERO ="*";
-typedef std::map<u64_t ,sVector_t> DocCollection_t;
+typedef std::map<u64_t ,sVector_t> SourceCollection_t;
+typedef SourceCollection_t::iterator SourceIterator_t;
 
+struct Document_t{
+    u64_t m_iDocId;
+    sVector_t m_vList;
+};
+/// source statistics
+struct MySourceStats
+{
+	size_t			m_iDocumentsCount;		// documents count
+	size_t			m_iTotalSizeBytes;		//tot memory size in bytes
 
-struct Document{
-    u64_t id;
-    string_t text;
+	MySourceStats ()
+	{
+		flat ();
+	}
+
+	void flat ()
+	{
+		m_iDocumentsCount = 0;
+		m_iTotalSizeBytes = 0;
+	}
 };
 struct MySource{
-	DocCollection_t m_tDocuments;
-
+	private:
+	MySourceStats m_tStats;
+	public:
+	SourceCollection_t m_tDocuments;
+	
     //def ctor
     MySource(){}
 	//cor
-	MySource(DocCollection_t &src){
+	MySource(SourceCollection_t &src){
 		m_tDocuments = src;
 	}
 	size_t count(){
 		return m_tDocuments.size();
 	}
+	MySourceStats* getStats(){
+		return &m_tStats;
+	}
+	virtual bool updateStats ();
+	
 	//dtor
 	~MySource(){}
 };
@@ -158,23 +183,7 @@ struct LeafCollection{
 	}*/
 };
 
-/// source statistics
-struct MySourceStats
-{
-	size_t			m_iDocumentsCount;		// documents count
-	size_t			m_iTotalSizeBytes;		//tot memory size in bytes
 
-	MySourceStats ()
-	{
-		flat ();
-	}
-
-	void flat ()
-	{
-		m_iDocumentsCount = 0;
-		m_iTotalSizeBytes = 0;
-	}
-};
 struct MyIndexStats
 {
 	size_t			m_iDocumentsCount; 		//doc count
@@ -256,14 +265,15 @@ class MyNodes{
 private:
 	NodeCollection m_tPrefixNodes;
 	NodeCollection m_tSuffixNodes;
-    NodeCollection m_tPreSuffixNodes;
-
+	#if ENABLE_INFIX
+    NodeCollection m_tInfixNodes;
+	#endif
 	LeafCollection m_tLeaves;
 	MySource m_tSource;
     size_t m_iCurrentCol = 0;
 	MyIndexProgress	m_tProgress;
 	MyIndexStats m_tIndexStats;
-	MySourceStats m_tSourceStats;
+	
 
 
  public:
@@ -273,7 +283,7 @@ private:
 
 	MyNodes();
 	bool buildIndex();
-	bool appendSource(DocCollection_t &src);
+	bool appendSource(SourceCollection_t &src);
 
 	void print_nodes(const bool verbose);
 

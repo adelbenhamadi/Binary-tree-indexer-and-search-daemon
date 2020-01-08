@@ -81,6 +81,7 @@ typedef long int __blksize_t;
 #define print_err(_args ...) std::fprintf(stderr, _args)
 
 namespace mynodes {
+
 typedef uint64_t u64_t;
 typedef std::string string_t;
 typedef std::vector<string_t> sVector_t;
@@ -89,13 +90,13 @@ typedef std::vector<u64_t> u64Vector_t;
 typedef std::chrono::high_resolution_clock::time_point timePoint_t;
 
 
-struct serverConnectionConfig {
+struct MyConnectionConfig {
 	const char *server;
 	const char *user;
 	const char *password;
 	const char *database;
 };
-MYSQL* mysql_connection_setup(struct serverConnectionConfig mysql_details);
+MYSQL* mysql_connection_setup(struct MyConnectionConfig mysql_details);
 MYSQL_RES* mysql_perform_query(MYSQL *connection, char *sql_query);
 
 void normalize_word(string_t &word);

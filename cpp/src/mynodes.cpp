@@ -11,26 +11,40 @@
 namespace mynodes {
 
 
+bool MySource::updateStats(){
+	MySourceStats * pstats = getStats();
+	pstats->m_iDocumentsCount = 0;
+	int tmp =0;
+	for (auto &doc : m_tDocuments) {
+        pstats->m_iDocumentsCount++;
+		tmp = 0;
+		for(auto &str: doc.second){
+			tmp += (int) strlen ( str.c_str() );	
+		}		
+		pstats->m_iTotalSizeBytes += tmp;
+	};
+	return true;
+}
+
 
 MyNodes::MyNodes() {
 
 	//initialize collections
 	m_tPrefixNodes = NodeCollection();
 	m_tSuffixNodes = NodeCollection();
-#if ENABLE_PRE_SUFFIX
-	m_tPreSuffixNodes = NodeCollection();
+#if ENABLE_INFIX
+	m_tInfixNodes = NodeCollection();
 #endif
 	m_tLeaves = LeafCollection();
 
 	m_iResultCount = 0;
 	m_iCurrentMode = 1;
 	m_tIndexStats = MyIndexStats();
-	m_tSourceStats = MySourceStats();
 	m_tProgress = MyIndexProgress();
 
 }
 
-bool MyNodes::appendSource(DocCollection_t &src) {
+bool MyNodes::appendSource(SourceCollection_t &src) {
 	assert(!src.empty());
 	m_tSource = MySource(src);
 	return true;
@@ -46,29 +60,28 @@ bool MyNodes::buildIndex() {
 	size_t co = 0;
 	timePoint_t t_s = STD_NOW;
 	//entering indexing phase
+	MySourceStats * pstats = m_tSource.getStats();
 	m_tProgress.m_ePhase = MyIndexProgress::PHASE_INDEX;
-
+	int fieldSz = 0;
 	for (auto &doc : m_tSource.m_tDocuments) {
         co++;
 		u64_t docId = doc.first;
 		string_t document = doc.second[m_iCurrentCol];
 		normalize_word(document);
-
-		if (document.empty()) {
-			continue;
-		}
-
+		if (document.empty()) {	continue;}
 		arr = explode(document, ' ');
 		sVector_t::size_type sz = arr.size();
-
+		fieldSz = 0;
 		 for (unsigned i = 0; i < sz; i++) {
-			string_t word = arr[i];
-
+			string_t word = arr[i];	
+						
 			if (word.empty() || word.size()< g_iMinKeywordSize) {
 				continue;
 			}
 			//TODO add stop Words check here
 
+			//
+			fieldSz += (int) strlen ( word.c_str() );
 			m_iCurrentMode = 1;
 			if (!m_tPrefixNodes.find(word)){
 				create_node(word, csKEY_ZERO);
@@ -80,19 +93,29 @@ bool MyNodes::buildIndex() {
 		    m_tLeaves.m_vCollection[word].addItem(docId);
 
 		}
-
+		pstats->m_iDocumentsCount = co;
+		pstats->m_iTotalSizeBytes += fieldSz;
+		//report every 1000 doc
 		if (co % 1000 == 0) {
-			m_tProgress.m_iDocumentsCount = co;
-			m_tProgress.m_iBytes = (m_tPrefixNodes.count() + m_tSuffixNodes.count())*(sizeof(Node)+sizeof(string_t));
+			m_tProgress.m_iDocumentsCount = pstats->m_iDocumentsCount;
+			m_tProgress.m_iBytes = pstats->m_iTotalSizeBytes;
 			m_tProgress.Show(false);
 		}
-
+	
 
 	}
+// show final report
+	
+	pstats->m_iDocumentsCount = 0;
+	m_tProgress.m_iDocumentsCount =  pstats->m_iDocumentsCount;
+	m_tProgress.m_iBytes =  pstats->m_iTotalSizeBytes;
+	m_tProgress.Show ( false );
+	
 	std::chrono::high_resolution_clock::time_point te = STD_NOW;
 	float duration = std::chrono::duration_cast<std::chrono::milliseconds>(te - t_s).count();
 	m_tProgress.Show(true);		
 	myprintf("\n\tDone in %8.3f seconds", duration / 1000);
+
 	return true;
 }
 //optimized version of create_node()
@@ -124,10 +147,10 @@ bool MyNodes::create_node(string_t &word, const string_t &left,
 		m_tPrefixNodes.add(word, left, right);
 		parent = word.substr(0, word.length() - 1);
 		break;
-#if ENABLE_PRE_SUFFIX
+#if ENABLE_INFIX
 	case 2:
 		assert(iDoc >= 0);
-		m_tPreSuffixNodes.add(word, left, right);
+		m_tInfixNodes.add(word, left, right);
 		if (!m_tLeaves.find(word))
 			m_tLeaves.add(word);
 
@@ -277,11 +300,11 @@ void MyNodes::print_nodes(const bool verbose) {
 					item.first.c_str(), item.second.right.c_str());
 		}
 	}
-#if ENABLE_PRE_SUFFIX
-	c= m_tPreSuffixNodes.count();
+#if ENABLE_INFIX
+	c= m_tInfixNodes.count();
 	myprintf("\n%d pre-suffix Nodes",c);
 	if(verbose) {
-		for(auto &item: m_tPreSuffixNodes.m_vCollection) {
+		for(auto &item: m_tInfixNodes.m_vCollection) {
 
 			myprintf("\n %s <-- %s --> %s" , item.second.left.c_str() , item.first.c_str() , item.second.right.c_str());
 		}

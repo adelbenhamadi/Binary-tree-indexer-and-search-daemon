@@ -62,7 +62,7 @@ void scan_stdin(const char* fmt,const int co, ...)
 }
 
 
-MYSQL* mysql_connection_setup(struct serverConnectionConfig mysql_details)
+MYSQL* mysql_connection_setup(struct MyConnectionConfig mysql_details)
 {
 
     MYSQL *connection = mysql_init(NULL);

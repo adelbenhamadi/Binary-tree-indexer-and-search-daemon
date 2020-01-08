@@ -10,16 +10,16 @@ void ShowProgress ( const MyIndexProgress* pProgress, bool bEndProgressPhase )
 	fprintf ( stdout, "%s%c", pProgress->BuildMessage(), bEndProgressPhase ? '\n' : '\r' );
 	fflush ( stdout );
 }
-bool load_data_to_src(const size_t limit, DocCollection_t &src) {
+bool load_data_to_src(const size_t limit, SourceCollection_t &src) {
 	MYSQL *conn;
 	MYSQL_RES *res;
 	MYSQL_ROW row;
 
-	struct serverConnectionConfig mysqlD;
+	struct MyConnectionConfig mysqlD;
 	mysqlD.server = "localhost";
-	mysqlD.user = "root";
+	mysqlD.user = "amor";
 	mysqlD.password = "*";
-	mysqlD.database = "mynodes_db";
+	mysqlD.database = "scheduler10_prod";
 
 	// connect to the mysql database
 	conn = mysql_connection_setup(mysqlD);
@@ -27,10 +27,10 @@ bool load_data_to_src(const size_t limit, DocCollection_t &src) {
 	//qry = "select count(*) from abonne_ft_v3";
 	if (limit == 0) {
 		sprintf(qry,
-				"select id,body from tmp");
+				"select id,tmp from logs");
 		} else {
 		sprintf(qry,
-				"select id,body from tmp limit 0,%d",limit);
+				"select id,tmp from logs limit 0,%d",limit);
 		}
 
 	printf("Query: \"%s\" \n", qry);
@@ -39,7 +39,7 @@ bool load_data_to_src(const size_t limit, DocCollection_t &src) {
 	unsigned long num_fields = mysql_num_fields(res);
 
 	u64_t i = 0;
-	DocCollection_t::iterator it = src.begin();
+	SourceIterator_t it = src.begin();
 	sVector_t cols;
 	//cols.reserve(num_fields);
 
@@ -72,8 +72,8 @@ int main(int argc, char *argv[]) {
 	int bTesting = 2;
 	g_bVerbose = 0;
 	g_bShowProgress = 1;
-	size_t iDocLimit = 20000;
-	int iMaxWordsPerDoc = 50;
+	size_t iDocLimit = 100000;
+	int iMaxWordsPerDoc = 150;
 
 	int i;
 	for (i = 1; i < argc; i++) {
@@ -112,7 +112,7 @@ int main(int argc, char *argv[]) {
 	}
 	//init myNodes
 	MyNodes mynodes;
-	DocCollection_t source;
+	SourceCollection_t source;
 	mynodes.SetProgressCallback ( ShowProgress );
 
 

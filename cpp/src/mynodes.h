@@ -43,22 +43,22 @@ struct MySource{
 	private:
 	MySourceStats m_tStats;
 	public:
-	SourceCollection_t m_tDocuments;
-	
+	SourceCollection_t* m_pDocuments;
+
     //def ctor
     MySource(){}
 	//cor
-	MySource(SourceCollection_t &src){
-		m_tDocuments = src;
+	MySource(SourceCollection_t* src){
+		m_pDocuments = src;
 	}
 	size_t count(){
-		return m_tDocuments.size();
+		return m_pDocuments->size();
 	}
 	MySourceStats* getStats(){
 		return &m_tStats;
 	}
 	virtual bool updateStats ();
-	
+
 	//dtor
 	~MySource(){}
 };
@@ -273,7 +273,7 @@ private:
     size_t m_iCurrentCol = 0;
 	MyIndexProgress	m_tProgress;
 	MyIndexStats m_tIndexStats;
-	
+
 
 
  public:

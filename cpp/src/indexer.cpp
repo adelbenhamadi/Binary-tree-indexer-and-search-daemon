@@ -151,6 +151,7 @@ int main(int argc, char *argv[]) {
 	//myprintf("\nSource : %d documents loaded!", source.size());
 
 	mynodes.appendSource(source);
+
 	mynodes.buildIndex();
 	if (!bTesting)
 		mynodes.save_data("data");
@@ -165,6 +166,7 @@ int main(int argc, char *argv[]) {
 	char word[32];
 	size_t climit = 0;
 	timePoint_t t_s;
+
 
 	while (1) {
 		myprintf("\nPlease enter a word to search for (press ! to quit): ");

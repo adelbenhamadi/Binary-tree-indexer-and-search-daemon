@@ -15,12 +15,12 @@ bool MySource::updateStats(){
 	MySourceStats * pstats = getStats();
 	pstats->m_iDocumentsCount = 0;
 	int tmp =0;
-	for (auto &doc : m_tDocuments) {
+	for (auto &doc : (*m_pDocuments)) {
         pstats->m_iDocumentsCount++;
 		tmp = 0;
 		for(auto &str: doc.second){
-			tmp += (int) strlen ( str.c_str() );	
-		}		
+			tmp += (int) strlen ( str.c_str() );
+		}
 		pstats->m_iTotalSizeBytes += tmp;
 	};
 	return true;
@@ -46,7 +46,8 @@ MyNodes::MyNodes() {
 
 bool MyNodes::appendSource(SourceCollection_t &src) {
 	assert(!src.empty());
-	m_tSource = MySource(src);
+	//actually just one source
+	m_tSource = MySource(&src);
 	return true;
 }
 bool MyNodes::buildIndex() {
@@ -54,7 +55,7 @@ bool MyNodes::buildIndex() {
 	sVector_t arr;
 	//report collecting phase
 	m_tProgress.m_ePhase = MyIndexProgress::PHASE_COLLECT;
-	m_tIndexStats.m_iDocumentsCount = m_tSource.m_tDocuments.size();
+	m_tIndexStats.m_iDocumentsCount = m_tSource.m_pDocuments->size();
 	m_tIndexStats.m_iDocumentSizeBytes = m_tIndexStats.m_iDocumentsCount*(sizeof(u64_t)+sizeof(sVector_t));
 	m_tProgress.Show(true);
 	size_t co = 0;
@@ -63,7 +64,8 @@ bool MyNodes::buildIndex() {
 	MySourceStats * pstats = m_tSource.getStats();
 	m_tProgress.m_ePhase = MyIndexProgress::PHASE_INDEX;
 	int fieldSz = 0;
-	for (auto &doc : m_tSource.m_tDocuments) {
+
+	for (auto &doc : *(m_tSource.m_pDocuments) ){
         co++;
 		u64_t docId = doc.first;
 		string_t document = doc.second[m_iCurrentCol];
@@ -73,8 +75,8 @@ bool MyNodes::buildIndex() {
 		sVector_t::size_type sz = arr.size();
 		fieldSz = 0;
 		 for (unsigned i = 0; i < sz; i++) {
-			string_t word = arr[i];	
-						
+			string_t word = arr[i];
+
 			if (word.empty() || word.size()< g_iMinKeywordSize) {
 				continue;
 			}
@@ -89,7 +91,7 @@ bool MyNodes::buildIndex() {
 			}
 			m_iCurrentMode = 0;
 			if (!m_tSuffixNodes.find(word))
-				create_node(word, csKEY_ZERO);		
+				create_node(word, csKEY_ZERO);
 		    m_tLeaves.m_vCollection[word].addItem(docId);
 
 		}
@@ -101,19 +103,19 @@ bool MyNodes::buildIndex() {
 			m_tProgress.m_iBytes = pstats->m_iTotalSizeBytes;
 			m_tProgress.Show(false);
 		}
-	
+
 
 	}
 // show final report
-	
+
 	pstats->m_iDocumentsCount = 0;
 	m_tProgress.m_iDocumentsCount =  pstats->m_iDocumentsCount;
 	m_tProgress.m_iBytes =  pstats->m_iTotalSizeBytes;
 	m_tProgress.Show ( false );
-	
+
 	std::chrono::high_resolution_clock::time_point te = STD_NOW;
 	float duration = std::chrono::duration_cast<std::chrono::milliseconds>(te - t_s).count();
-	m_tProgress.Show(true);		
+	m_tProgress.Show(true);
 	myprintf("\n\tDone in %8.3f seconds", duration / 1000);
 
 	return true;
@@ -326,10 +328,10 @@ void MyNodes::print_leaves(const bool verbose) {
 }
 
 void MyNodes::print_documents(const bool verbose) {
-	auto c = m_tSource.m_tDocuments.size();
+	auto c = m_tSource.m_pDocuments->size();
 	myprintf("\n%d m_tDocuments", c);
 	if (verbose) {
-		for (auto &doc : m_tSource.m_tDocuments) {
+		for (auto &doc : *(m_tSource.m_pDocuments)) {
 			//string_t content = doc.second[iCurrentCol];
 			myprintf("\n %llu =>", doc.first);
 			for (auto& v : doc.second)
@@ -515,7 +517,7 @@ bool MyNodes::save_documents(const char *dir) {
 		//write count
 		co = m_tSource.count();
 		std::fwrite(&co, sizeof(u64_t), 1, fp);
-		for (auto &doc : m_tSource.m_tDocuments) {
+		for (auto &doc : *(m_tSource.m_pDocuments)) {
 			docid = doc.first;
 			std::fwrite(&docid, sizeof(u64_t), 1, fp);
 			co2 = doc.second.size();
@@ -544,13 +546,14 @@ bool MyNodes::load_documents(const char *dir) {
 		string_t content;
 		u64_t co, docid;
 		size_t co2;
+		SourceCollection_t source = *(m_tSource.m_pDocuments);
 		std::fread(&co, sizeof(u64_t), 1, fp);
 		for (u64_t i = 0; i < co; i++) {
 			std::fread(&docid, sizeof(u64_t), 1, fp);
 			std::fread(&co2, sizeof(size_t), 1, fp);
 			for (unsigned int j = 0; j < co2; j++) {
 				content = readStringFromBinFile(fp);
-				m_tSource.m_tDocuments[docid].emplace_back(content);
+				source[docid].emplace_back(content);
 				if (DEBUG_LEVEL > 2) //TODO remove
 					myprintf("\nreading doc %llu => %s ", docid,
 							content.c_str());
@@ -595,7 +598,8 @@ bool MyNodes::load_data(const char* dir) {
 }
 string_t MyNodes::get_document(const u64_t ind) {
 	string_t doc;
-	for (auto& v : m_tSource.m_tDocuments[ind])
+	auto source = *(m_tSource.m_pDocuments);
+	for (auto &v : source[ind])
 		doc = doc + "\t" + v;
 	return doc;
 }

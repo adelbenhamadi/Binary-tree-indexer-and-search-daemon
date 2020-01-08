@@ -8,17 +8,35 @@
 #define ENABLE_PRE_SUFFIX 0
 
 namespace mynodes {
-const u64_t g_iMaxLeafSize =100000;
-const int g_iMinKeywordSize = 3;
+
+static bool			g_bVerbose		= false;
+static bool			g_bShowProgress		= true;
+static  u64_t 		g_iMaxLeafSize =100000;
+static  int 		g_iMinKeywordSize = 3;
+
 const string_t csKEY_ZERO ="*";
+typedef std::map<u64_t ,sVector_t> DocCollection_t;
+
 
 struct Document{
     u64_t id;
     string_t text;
 };
-typedef std::map<u64_t ,sVector_t> DocCollection;
+struct MySource{
+	DocCollection_t m_tDocuments;
 
-
+    //def ctor
+    MySource(){}
+	//cor
+	MySource(DocCollection_t &src){
+		m_tDocuments = src;
+	}
+	size_t count(){
+		return m_tDocuments.size();
+	}
+	//dtor
+	~MySource(){}
+};
 struct Node{
 	string_t left;
 	string_t right;
@@ -140,24 +158,122 @@ struct LeafCollection{
 	}*/
 };
 
-class myNodes{
+/// source statistics
+struct MySourceStats
+{
+	size_t			m_iDocumentsCount;		// documents count
+	size_t			m_iTotalSizeBytes;		//tot memory size in bytes
+
+	MySourceStats ()
+	{
+		flat ();
+	}
+
+	void flat ()
+	{
+		m_iDocumentsCount = 0;
+		m_iTotalSizeBytes = 0;
+	}
+};
+struct MyIndexStats
+{
+	size_t			m_iDocumentsCount; 		//doc count
+	size_t 			m_iDocumentSizeBytes; 	//doc memory size in bytes
+	size_t 			m_iPrefixCount; 		//prefix nodes count
+	size_t 			m_iPrefixSizeBytes; 	//pref memory size in bytes
+	size_t 			m_iSuffixCount; 		//suffix nodes count
+	size_t 			m_iSuffixSizeBytes; 	//suff memory size in bytes
+	size_t 			m_iLeavesCount; 		//leaves count
+	size_t 			m_iLeavesSizeBytes; 	//leaves memory size in bytes
+
+	//ctor
+	MyIndexStats(){
+		flat();
+	}
+	void flat(){
+		m_iDocumentsCount = 0;
+		m_iDocumentSizeBytes = 0;
+		m_iPrefixCount = 0;
+		m_iPrefixSizeBytes = 0;
+		m_iSuffixCount = 0;
+		m_iSuffixSizeBytes = 0;
+		m_iLeavesCount = 0;
+		m_iLeavesSizeBytes = 0;
+
+
+	}
+	size_t ToalSizeBytes(){
+		return m_iDocumentSizeBytes+m_iPrefixSizeBytes+m_iSuffixSizeBytes+m_iLeavesSizeBytes;
+	}
+};
+
+struct MyIndexProgress
+{
+
+enum My_phase
+	{
+		PHASE_COLLECT,					// collecting phase
+		PHASE_PRECOMPUTE,
+		PHASE_INDEX	,					// indexing phase
+		PHASE_SORT,						// sorting phase
+		PHASE_MERGE,					// index merging phase
+		PHASE_PREREAD
+	};
+
+	My_phase			m_ePhase;		// current indexing phase
+
+	int64_t			m_iDocumentsCount;	// PHASE_COLLECT: documents collected so far
+	int64_t			m_iBytes;			// PHASE_COLLECT: bytes collected so far
+	int64_t 		m_iBytesTotal; 		//total read
+
+	int64_t		m_iHits;				// PHASE_SORT: hits sorted so far
+	int64_t		m_iHitsTotal;			// PHASE_SORT: hits total
+
+	int				m_iDone;
+
+	typedef void ( *IndexingProgress_fn ) ( const MyIndexProgress * pStat, bool bEndProgressPhase );
+	IndexingProgress_fn m_fnProgress;
+
+	MyIndexProgress ()
+		: m_ePhase ( PHASE_COLLECT )
+		, m_iDocumentsCount ( 0 )
+		, m_iBytes ( 0 )
+		, m_iHits ( 0 )
+		,m_iBytesTotal (0)
+		, m_iHitsTotal ( 0 )
+		, m_fnProgress ( NULL )
+	{}
+
+	/// builds a message to print
+	/// WARNING, STATIC BUFFER, NON-REENTRANT
+	const char * BuildMessage() const;
+
+	void Show ( bool bEndProgressPhase ) const;
+};
+
+
+class MyNodes{
 private:
 	NodeCollection m_tPrefixNodes;
 	NodeCollection m_tSuffixNodes;
     NodeCollection m_tPreSuffixNodes;
 
 	LeafCollection m_tLeaves;
-	DocCollection m_tDocuments;
+	MySource m_tSource;
     size_t m_iCurrentCol = 0;
+	MyIndexProgress	m_tProgress;
+	MyIndexStats m_tIndexStats;
+	MySourceStats m_tSourceStats;
 
 
  public:
     u64_t m_iResultCount;
     LeafItemsVector_t m_tResultItems;
     int m_iCurrentMode;
-	myNodes();
+
+	MyNodes();
 	bool buildIndex();
-	bool append_source(DocCollection &src);
+	bool appendSource(DocCollection_t &src);
 
 	void print_nodes(const bool verbose);
 
@@ -170,6 +286,7 @@ private:
 
 	void doSearch(string_t sToSearch);
 	void doSearch(const string_t &l,const string_t &r,const int iFollowMode);
+	void SetProgressCallback ( MyIndexProgress::IndexingProgress_fn pfnProgress );
 private:
 	bool create_node(string_t &word,const string_t &left);
 	bool create_node(string_t &word,const string_t &left,const string_t &right,const  int iMode,const u64_t doci);
@@ -185,6 +302,7 @@ private:
 	bool load_documents(const char *dir);
 
 };//end class
+
 
 }
 

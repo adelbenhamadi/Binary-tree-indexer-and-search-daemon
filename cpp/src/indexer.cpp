@@ -4,16 +4,22 @@
 
 using namespace mynodes;
 
-bool load_data_to_src(const size_t limit, DocCollection &src) {
+void ShowProgress ( const MyIndexProgress* pProgress, bool bEndProgressPhase )
+{
+	if ( !g_bVerbose && !g_bShowProgress  )	return;
+	fprintf ( stdout, "%s%c", pProgress->BuildMessage(), bEndProgressPhase ? '\n' : '\r' );
+	fflush ( stdout );
+}
+bool load_data_to_src(const size_t limit, DocCollection_t &src) {
 	MYSQL *conn;
 	MYSQL_RES *res;
 	MYSQL_ROW row;
 
 	struct serverConnectionConfig mysqlD;
 	mysqlD.server = "localhost";
-	mysqlD.user = "amor";
+	mysqlD.user = "root";
 	mysqlD.password = "*";
-	mysqlD.database = "scheduler10_prod";
+	mysqlD.database = "mynodes_db";
 
 	// connect to the mysql database
 	conn = mysql_connection_setup(mysqlD);
@@ -21,10 +27,10 @@ bool load_data_to_src(const size_t limit, DocCollection &src) {
 	//qry = "select count(*) from abonne_ft_v3";
 	if (limit == 0) {
 		sprintf(qry,
-				"select id,tmp from logs");
+				"select id,body from tmp");
 		} else {
 		sprintf(qry,
-				"select id,tmp from logs limit 0,%d",limit);
+				"select id,body from tmp limit 0,%d",limit);
 		}
 
 	printf("Query: \"%s\" \n", qry);
@@ -33,7 +39,7 @@ bool load_data_to_src(const size_t limit, DocCollection &src) {
 	unsigned long num_fields = mysql_num_fields(res);
 
 	u64_t i = 0;
-	DocCollection::iterator it = src.begin();
+	DocCollection_t::iterator it = src.begin();
 	sVector_t cols;
 	//cols.reserve(num_fields);
 
@@ -63,10 +69,11 @@ bool load_data_to_src(const size_t limit, DocCollection &src) {
 
 int main(int argc, char *argv[]) {
 
-	bool bTesting = 1;
-	bool verbose = 0;
-	size_t iDocLimit = 10000;
-	int iMaxWordsPerDoc = 1000;
+	int bTesting = 2;
+	g_bVerbose = 0;
+	g_bShowProgress = 1;
+	size_t iDocLimit = 20000;
+	int iMaxWordsPerDoc = 50;
 
 	int i;
 	for (i = 1; i < argc; i++) {
@@ -92,7 +99,7 @@ int main(int argc, char *argv[]) {
 								"\n"
 								"Options are:\n"
 								"--quiet\t\t\tbe quiet, only print errors\n"
-								"--verbose\t\tverbose indexing issues report\n"
+								"--g_bVerbose\t\tg_bVerbose indexing issues report\n"
 								"--noprogress\t\tdo not display progress\n"
 								"--limit\t\t\tonly index <limit> documents, zero or default: index all documents\n"
 								"--testing\t\t\ttesting mode for debugging\n"
@@ -103,13 +110,22 @@ int main(int argc, char *argv[]) {
 			return 1;
 		}
 	}
-	myNodes mynodes;
+	//init myNodes
+	MyNodes mynodes;
+	DocCollection_t source;
+	mynodes.SetProgressCallback ( ShowProgress );
 
-	DocCollection source;
 
-	if (bTesting) {
+    if (!bTesting) {
+		load_data_to_src(iDocLimit, source);
+	}else
+	if (bTesting==1) {
        myprintf("\nin Testing mode..");
-
+       source[0].push_back("azerty appe binne serre cires") ;
+       source[1].push_back("natte ,beese,fury zeeyu\\karim .kaaem ;iopee") ;
+       source[2].push_back("appe/needle: facees! wallet$") ;
+       source[3].push_back("businees�;:/*,fury*arom%acdc]\"begin fuueryu* saaleetre&") ;
+	}else if(bTesting==2){
 
        std::string tmp;
        for(u64_t i=0;i<iDocLimit;i++){
@@ -120,29 +136,28 @@ int main(int argc, char *argv[]) {
 
          }
         doc.push_back(tmp);
-        if(verbose && i % 1000 == 0){
+        if(g_bVerbose && i % 1000 == 0){
             myprintf("\n random doc: %s\r\n",tmp.c_str());
         }
 
         source.insert(source.begin(), std::pair<u64_t, sVector_t>(i, doc));
-        if( i % 1000 == 0)
+        if( i % 1000 == 0){
             myprintf("\r\t%lu random documents generated",i);
             fflush(stdout);
+        }
        }
 
-	} else {
-		load_data_to_src(iDocLimit, source);
 	}
-	myprintf("\nSource : %d documents loaded!", source.size());
+	//myprintf("\nSource : %d documents loaded!", source.size());
 
-	mynodes.append_source(source);
+	mynodes.appendSource(source);
 	mynodes.buildIndex();
 	if (!bTesting)
 		mynodes.save_data("data");
 
-	mynodes.print_documents(verbose || (iDocLimit > 0 && iDocLimit <= 10));
-	mynodes.print_nodes(verbose);
-	mynodes.print_leaves(verbose);
+	mynodes.print_documents(g_bVerbose || (iDocLimit > 0 && iDocLimit <= 10));
+	mynodes.print_nodes(g_bVerbose);
+	mynodes.print_leaves(g_bVerbose);
 
 	//searching
 	myprintf("\n\nbegin searching\n");
@@ -167,6 +182,7 @@ int main(int argc, char *argv[]) {
 		mynodes.doSearch((string_t) word);
 
 		size_t i = 1;
+
 		for (LeafItemsVector_t::iterator it =
 				mynodes.m_tResultItems.begin();
 				i <= climit && it != mynodes.m_tResultItems.end();
@@ -176,7 +192,7 @@ int main(int argc, char *argv[]) {
 			myprintf("\n%d %llu \t%s", i++, *it,str.c_str());
 		}
 		myprintf("\n-----------------\n");
-		myprintf("\n %llu docs found for %s\n", (u64_t )*(mynodes.m_tResultItems.begin()), ((string_t) word).c_str());
+		myprintf("\n %llu docs found for %s\n", (u64_t ) (mynodes.m_tResultItems.size()), ((string_t) word).c_str());
 
 		print_time("searching done in", t_s);
 

@@ -47,6 +47,8 @@
 		<Unit filename="../../src/indexer.cpp" />
 		<Unit filename="../../src/mynodes.cpp" />
 		<Unit filename="../../src/mynodes.h" />
+		<Unit filename="../../src/myvector.cpp" />
+		<Unit filename="../../src/myvector.h" />
 		<Unit filename="../../src/utils.cpp" />
 		<Unit filename="../../src/utils.h" />
 		<Extensions>

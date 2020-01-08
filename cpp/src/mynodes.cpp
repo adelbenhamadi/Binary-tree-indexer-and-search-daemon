@@ -12,7 +12,7 @@ namespace mynodes {
 
 
 
-myNodes::myNodes() {
+MyNodes::MyNodes() {
 
 	//initialize collections
 	m_tPrefixNodes = NodeCollection();
@@ -24,23 +24,31 @@ myNodes::myNodes() {
 
 	m_iResultCount = 0;
 	m_iCurrentMode = 1;
+	m_tIndexStats = MyIndexStats();
+	m_tSourceStats = MySourceStats();
+	m_tProgress = MyIndexProgress();
 
 }
 
-bool myNodes::append_source(DocCollection &src) {
+bool MyNodes::appendSource(DocCollection_t &src) {
 	assert(!src.empty());
-	m_tDocuments = src;
+	m_tSource = MySource(src);
 	return true;
 }
-bool myNodes::buildIndex() {
+bool MyNodes::buildIndex() {
 
 	sVector_t arr;
-
-	myprintf("\n start processing documents :%d  documents\n---------\n",
-			m_tDocuments.size());
-	int co = 0;
+	//report collecting phase
+	m_tProgress.m_ePhase = MyIndexProgress::PHASE_COLLECT;
+	m_tIndexStats.m_iDocumentsCount = m_tSource.m_tDocuments.size();
+	m_tIndexStats.m_iDocumentSizeBytes = m_tIndexStats.m_iDocumentsCount*(sizeof(u64_t)+sizeof(sVector_t));
+	m_tProgress.Show(true);
+	size_t co = 0;
 	timePoint_t t_s = STD_NOW;
-	for (auto &doc : m_tDocuments) {
+	//entering indexing phase
+	m_tProgress.m_ePhase = MyIndexProgress::PHASE_INDEX;
+
+	for (auto &doc : m_tSource.m_tDocuments) {
         co++;
 		u64_t docId = doc.first;
 		string_t document = doc.second[m_iCurrentCol];
@@ -53,7 +61,7 @@ bool myNodes::buildIndex() {
 		arr = explode(document, ' ');
 		sVector_t::size_type sz = arr.size();
 
-		for (unsigned i = 0; i < sz; i++) {
+		 for (unsigned i = 0; i < sz; i++) {
 			string_t word = arr[i];
 
 			if (word.empty() || word.size()< g_iMinKeywordSize) {
@@ -62,48 +70,33 @@ bool myNodes::buildIndex() {
 			//TODO add stop Words check here
 
 			m_iCurrentMode = 1;
-			if (!m_tPrefixNodes.find(word))
+			if (!m_tPrefixNodes.find(word)){
 				create_node(word, csKEY_ZERO);
-			//create_node(word,key_zero,key_zero,1,-1);
-
+                m_tLeaves.add(word);
+			}
 			m_iCurrentMode = 0;
 			if (!m_tSuffixNodes.find(word))
-				create_node(word, csKEY_ZERO);
-			//create_node(word,key_zero,key_zero,0,docId);
-
-			if (!m_tLeaves.find(word)){
-				m_tLeaves.add(word);
-				//newLeaf.reserve(1000);
-		}
+				create_node(word, csKEY_ZERO);		
 		    m_tLeaves.m_vCollection[word].addItem(docId);
-
-		/*	if (!m_tLeaves.find(word)){
-				Leaf newLeaf = m_tLeaves.add(word);
-				//newLeaf.reserve(1000);
-				newLeaf.addItem(docId);
-		}else{
-		    m_tLeaves.m_vCollection[word].addItem(docId);
-		}
-*/
 
 		}
 
 		if (co % 1000 == 0) {
-			myprintf("\r %d m_tDocuments processed", co);
-			fflush(stdout);
+			m_tProgress.m_iDocumentsCount = co;
+			m_tProgress.m_iBytes = (m_tPrefixNodes.count() + m_tSuffixNodes.count())*(sizeof(Node)+sizeof(string_t));
+			m_tProgress.Show(false);
 		}
 
 
 	}
 	std::chrono::high_resolution_clock::time_point te = STD_NOW;
-	float duration = std::chrono::duration_cast<std::chrono::microseconds>(
-			te - t_s).count();
-	myprintf("\r %d documents processed in %8.4f seconds", co,
-			duration / 1000000);
+	float duration = std::chrono::duration_cast<std::chrono::milliseconds>(te - t_s).count();
+	m_tProgress.Show(true);		
+	myprintf("\n\tDone in %8.3f seconds", duration / 1000);
 	return true;
 }
 //optimized version of create_node()
-bool myNodes::create_node(string_t &word, const string_t &left) {
+bool MyNodes::create_node(string_t &word, const string_t &left) {
 	string_t parent;
 	switch (m_iCurrentMode) {
 	case 0:
@@ -122,7 +115,7 @@ bool myNodes::create_node(string_t &word, const string_t &left) {
 	return true;
 }
 
-bool myNodes::create_node(string_t &word, const string_t &left,
+bool MyNodes::create_node(string_t &word, const string_t &left,
 		const string_t &right, const int iMode, const u64_t iDoc) {
 	string_t parent;
 	switch (iMode) {
@@ -161,7 +154,7 @@ bool myNodes::create_node(string_t &word, const string_t &left,
 	return true;
 }
 
-bool myNodes::follow(const string_t &sFirst, const string_t &sSecond,
+bool MyNodes::follow(const string_t &sFirst, const string_t &sSecond,
 		const int iFollowMode, const bool right,LeafItemsVector_t *pMergedLeafItems) {
 	NodeCollection* tNodeCol;
 	switch (iFollowMode) {
@@ -239,14 +232,14 @@ bool myNodes::follow(const string_t &sFirst, const string_t &sSecond,
 	}
 	return true;
 }
-void myNodes::doSearch(const string_t &l, const string_t &r,const int iFollowMode) {
+void MyNodes::doSearch(const string_t &l, const string_t &r,const int iFollowMode) {
 	m_tResultItems.clear();
 	follow(l, r, iFollowMode, false,&m_tResultItems);
 	m_tResultItems.sort();
 	m_tResultItems.unique();
 
 }
-void myNodes::doSearch(string_t sKey) {
+void MyNodes::doSearch(string_t sKey) {
 	const string_t sStar = "*";
 	string_t sTmp;
 	std::size_t pos = sKey.find(sStar);
@@ -265,7 +258,7 @@ void myNodes::doSearch(string_t sKey) {
 		doSearch(sKey,sTmp,1);
 	}
 }
-void myNodes::print_nodes(const bool verbose) {
+void MyNodes::print_nodes(const bool verbose) {
 	auto c = m_tPrefixNodes.count();
 	myprintf("\n%llu prefix Nodes", c);
 	if (verbose) {
@@ -295,7 +288,7 @@ void myNodes::print_nodes(const bool verbose) {
 	}
 #endif
 }
-void myNodes::print_leaves(const bool verbose) {
+void MyNodes::print_leaves(const bool verbose) {
 	auto c = m_tLeaves.count();
 	myprintf("\n%llu Leaves", c);
 	if (verbose) {
@@ -309,11 +302,11 @@ void myNodes::print_leaves(const bool verbose) {
 	}
 }
 
-void myNodes::print_documents(const bool verbose) {
-	auto c = m_tDocuments.size();
+void MyNodes::print_documents(const bool verbose) {
+	auto c = m_tSource.m_tDocuments.size();
 	myprintf("\n%d m_tDocuments", c);
 	if (verbose) {
-		for (auto &doc : m_tDocuments) {
+		for (auto &doc : m_tSource.m_tDocuments) {
 			//string_t content = doc.second[iCurrentCol];
 			myprintf("\n %llu =>", doc.first);
 			for (auto& v : doc.second)
@@ -322,7 +315,7 @@ void myNodes::print_documents(const bool verbose) {
 	}
 }
 
-bool myNodes::save_nodes(const char *dir) {
+bool MyNodes::save_nodes(const char *dir) {
 	char filename[PATH_MAX];
 	realpath(dir, filename);
 	strcat(filename, "/nodes.bin");
@@ -358,14 +351,14 @@ bool myNodes::save_nodes(const char *dir) {
 
 		std::fclose(fp);
 	} else {
-		perror("Error opening file for writing");
+		perror("\nError opening file for writing");
 		return false;
 	}
 
 	return true;
 }
 
-bool myNodes::load_nodes(const char *dir) {
+bool MyNodes::load_nodes(const char *dir) {
 	char filename[PATH_MAX];
 	realpath(dir, filename);
 	strcat(filename, "/nodes.bin");
@@ -406,7 +399,7 @@ bool myNodes::load_nodes(const char *dir) {
 	return true;
 }
 
-bool myNodes::save_leaves(const char *dir) {
+bool MyNodes::save_leaves(const char *dir) {
 	char filename[PATH_MAX];
 	realpath(dir, filename);
 	strcat(filename, "/leaves.bin");
@@ -447,7 +440,7 @@ bool myNodes::save_leaves(const char *dir) {
 	return true;
 }
 
-bool myNodes::load_leaves(const char *dir) {
+bool MyNodes::load_leaves(const char *dir) {
 	char filename[PATH_MAX];
 	realpath(dir, filename);
 	strcat(filename, "/leaves.bin");
@@ -485,7 +478,7 @@ bool myNodes::load_leaves(const char *dir) {
 	return true;
 }
 
-bool myNodes::save_documents(const char *dir) {
+bool MyNodes::save_documents(const char *dir) {
 	char filename[PATH_MAX];
 	realpath(dir, filename);
 	strcat(filename, "/m_tDocuments.bin");
@@ -497,9 +490,9 @@ bool myNodes::save_documents(const char *dir) {
 		u64_t docid, co;
 		size_t co2;
 		//write count
-		co = m_tDocuments.size();
+		co = m_tSource.count();
 		std::fwrite(&co, sizeof(u64_t), 1, fp);
-		for (auto &doc : m_tDocuments) {
+		for (auto &doc : m_tSource.m_tDocuments) {
 			docid = doc.first;
 			std::fwrite(&docid, sizeof(u64_t), 1, fp);
 			co2 = doc.second.size();
@@ -516,7 +509,7 @@ bool myNodes::save_documents(const char *dir) {
 
 	return true;
 }
-bool myNodes::load_documents(const char *dir) {
+bool MyNodes::load_documents(const char *dir) {
 	char filename[PATH_MAX];
 	realpath(dir, filename);
 	strcat(filename, "/m_tDocuments.bin");
@@ -534,7 +527,7 @@ bool myNodes::load_documents(const char *dir) {
 			std::fread(&co2, sizeof(size_t), 1, fp);
 			for (unsigned int j = 0; j < co2; j++) {
 				content = readStringFromBinFile(fp);
-				m_tDocuments[docid].emplace_back(content);
+				m_tSource.m_tDocuments[docid].emplace_back(content);
 				if (DEBUG_LEVEL > 2) //TODO remove
 					myprintf("\nreading doc %llu => %s ", docid,
 							content.c_str());
@@ -549,7 +542,7 @@ bool myNodes::load_documents(const char *dir) {
 	}
 	return true;
 }
-bool myNodes::save_data(const char* dir) {
+bool MyNodes::save_data(const char* dir) {
 	timePoint_t t_s = STD_NOW;
 	save_leaves(dir);
 	print_time(" Leaves saved in",t_s);
@@ -563,7 +556,7 @@ bool myNodes::save_data(const char* dir) {
 	print_time(" Documents saved in",t_s);
 	return true;
 }
-bool myNodes::load_data(const char* dir) {
+bool MyNodes::load_data(const char* dir) {
 	timePoint_t t_s = STD_NOW;
 	load_leaves(dir);
 	print_time(" Leaves loaded in",t_s);
@@ -577,15 +570,73 @@ bool myNodes::load_data(const char* dir) {
 	print_time(" Documents loaded in",t_s);
 	return true;
 }
-string_t myNodes::get_document(const u64_t ind) {
+string_t MyNodes::get_document(const u64_t ind) {
 	string_t doc;
-	for (auto& v : m_tDocuments[ind])
+	for (auto& v : m_tSource.m_tDocuments[ind])
 		doc = doc + "\t" + v;
 	return doc;
 }
-void myNodes::clearResults() {
+void MyNodes::clearResults() {
 	m_iResultCount = 0;
 	m_tResultItems.clear();
+}
+void MyNodes::SetProgressCallback ( MyIndexProgress::IndexingProgress_fn  pFnc )
+{
+	m_tProgress.m_fnProgress = pFnc;
+}
+static inline float GetPercent ( int64_t a, int64_t b )
+{
+	if ( b==0 )	return 100.0f;
+	int64_t r = a*100000/b;
+	return float(r)/1000;
+}
+const char * MyIndexProgress::BuildMessage() const
+{
+	static char sBuf[256];
+	switch ( m_ePhase )
+	{
+		case PHASE_COLLECT:
+			snprintf ( sBuf, sizeof(sBuf), "collected %llu docs, %.1f MB", m_iDocumentsCount,
+				float(m_iBytes)/1000000.0f );
+			break;
+		case PHASE_INDEX:
+			snprintf ( sBuf, sizeof(sBuf), "%llu documents processed, %.1f MB", m_iDocumentsCount,
+				float(m_iBytes)/1000000.0f );
+			break;
+	/*	case PHASE_SORT:
+			snprintf ( sBuf, sizeof(sBuf), "sorted %.1f Mhits, %.1f%% done", float(m_iHits)/1000000,
+				GetPercent ( m_iHits, m_iHitsTotal ) );
+			break;
+
+		case PHASE_MERGE:
+			snprintf ( sBuf, sizeof(sBuf), "merged %.1f Kwords", float(m_iWords)/1000 );
+			break;
+
+		case PHASE_PREREAD:
+			snprintf ( sBuf, sizeof(sBuf), "read %.1f of %.1f MB, %.1f%% done",
+				float(m_iBytes)/1000000.0f, float(m_iBytesTotal)/1000000.0f,
+				GetPercent ( m_iBytes, m_iBytesTotal ) );
+			break;
+
+		case PHASE_PRECOMPUTE:
+			snprintf ( sBuf, sizeof(sBuf), "indexing attributes, %d.%d%% done", m_iDone/10, m_iDone%10 );
+			break;
+*/
+		default:
+			assert ( 0 && "internal error: unhandled progress phase" );
+			snprintf ( sBuf, sizeof(sBuf), "(progress-phase-%d)", m_ePhase );
+			break;
+	}
+
+	sBuf[sizeof(sBuf)-1] = '\0';
+	return sBuf;
+}
+
+
+void MyIndexProgress::Show ( bool bPhaseEnd ) const
+{
+	if ( m_fnProgress )
+		m_fnProgress ( this, bPhaseEnd );
 }
 
 }

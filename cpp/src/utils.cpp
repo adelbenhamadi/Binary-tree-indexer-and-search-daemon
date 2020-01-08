@@ -6,7 +6,7 @@ std::string random_string(int seed){
 
     std::string possible_characters = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 
-    auto seed2 =  std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    auto seed2 =  std::chrono::duration_cast<std::chrono::milliseconds>(STD_NOW.time_since_epoch()).count();
     std::mt19937 engine(seed*5+seed2);
     std::uniform_int_distribution<> dist(0, possible_characters.size()-1);
     int irand = dist(engine) % 16 + 3;
@@ -32,9 +32,8 @@ std::string random_string2()
 }
 
 void print_time(const char* mess,timePoint_t t_s){
-    timePoint_t te = STD_NOW;
 
-    float duration = std::chrono::duration_cast<std::chrono::microseconds>( te - t_s ).count();
+    float duration = std::chrono::duration_cast<std::chrono::microseconds>( ( (timePoint_t) STD_NOW ) - t_s ).count();
     myprintf("\n%s %8.3f milliseconds",mess,duration/1000);
     //t_s = std::chrono::high_resolution_clock::now();
   };
@@ -46,6 +45,11 @@ void strToLower(char *s)
 }
 void normalize_word(string_t &word){
     std::transform(word.begin(), word.end(), word.begin(), ::tolower);
+    std::replace_if(word.begin(), word.end(), [](char c) {
+                    std::string s = ",/;:%\"'|`@[]\\";
+                    return (s.find(c) != std::string::npos );
+                    } , ' ');
+    //std::replace(word.begin(), word.end(), ',', ' ');
     word.erase(remove_if(word.begin(), word.end(), [](char c) { return !isspace(c) && !isalnum(c) ; } ), word.end());
 }
 void scan_stdin(const char* fmt,const int co, ...)

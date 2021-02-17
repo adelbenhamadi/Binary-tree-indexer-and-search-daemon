@@ -1,7 +1,65 @@
+# vs code
 .vscode/**
-cpp/src/experimental/**
-cpp/win/vscode/**
-cpp/win/codeBlocks/data/**
-cpp/win/codeBlocks/obj/**
 .settings/**
-*.key
+
+
+# Prerequisites
+*.d
+
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Fortran module files
+*.mod
+*.smod
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
+
+
+# win dir
+win
+
+# data & docs
+*/data
+docs/**
+
+# codeblocks project files
+*.cbp
+*.layout
+*.depend
+*.def
+
+# eclipse project files
+.cproject
+.project
+.settings
+
+#  CMake stuff
+CMakeCache.txt
+CMakeFiles
+
+# output dir
+obj
+out
+bin

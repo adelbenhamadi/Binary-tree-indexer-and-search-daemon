@@ -1,3 +1,11 @@
+//***************************************************************************************/
+//*    snippet of this code are udapted from Sphinxsearch source code
+//*    Author: Copyright (c) 2001-2016, Andrew Aksyonoff / Copyright (c) 2008-2016, Sphinx Technologies Inc
+//*    Date: ?
+//*    Code version: 2.95
+//*    Availability: http://www.sphinxsearch.com
+//*
+//***************************************************************************************///
 
 #include "../helpers/utility.h"
 #include "./source-sql.h"
